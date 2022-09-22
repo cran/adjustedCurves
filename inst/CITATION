@@ -1,0 +1,12 @@
+year <- sub("-.*", "", meta$Date)
+note <- sprintf("R package version %s", meta$Version)
+
+bibentry(bibtype = "Article",
+         title = "A Comparison of Different Methods to Adjust Survival Curves for Confounders",
+         author = c(person("Robin", "Denz"),
+                    person("Renate", "Klaaßen-Mielke"),
+                    person("Nina", "Timmesfeld")),
+		 journal = "http://arxiv.org/abs/2203.10002",
+         year = 2022,
+         note = note,
+         url = "https://github.com/RobinDenz1/")
