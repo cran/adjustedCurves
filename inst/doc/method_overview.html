@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Robin Denz" />
+
+
+<title>Overview of methods in adjustedCurves</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Overview of methods in adjustedCurves</h1>
+<h4 class="author">Robin Denz</h4>
+
+
+
+<p>The amount of methods implemented in this package can be overwhelming
+at first, making one wonder which method should be used. This small
+vignette exists to make this choice a little easier by providing a
+concise overview of the functionality of each method implemented in the
+<code>adjustedsurv()</code> and <code>adjustedcif()</code> functions.
+Note that this vignette does not contain a description of how these
+methods work or when. Information about that can be found in Denz et
+al. (2023) or the respective documentation pages and the cited
+literature therein.</p>
+<div id="methods-in-adjustedsurv" class="section level1">
+<h1>Methods in <code>adjustedsurv()</code></h1>
+<p>The following table gives a general overview of all supported methods
+in <code>adjustedsurv()</code>:</p>
+<table>
+<colgroup>
+<col width="5%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="8%" />
+<col width="5%" />
+<col width="7%" />
+<col width="4%" />
+<col width="10%" />
+<col width="6%" />
+<col width="5%" />
+<col width="6%" />
+<col width="5%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="left">Supports Unmeasured Confounding</th>
+<th align="left">Supports Categorical Treatments</th>
+<th align="left">Supports Continuous Confounders</th>
+<th align="left">Approximate SE available</th>
+<th align="left">Always in Bounds</th>
+<th align="left">Always non-increasing</th>
+<th align="left">Doubly-Robust</th>
+<th align="left">Supports Dependent Censoring</th>
+<th align="left">Type of Adjustment</th>
+<th align="left">Is Nonparametric</th>
+<th align="left">Computation Speed</th>
+<th align="left">Dependencies</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">“direct”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">outcome</td>
+<td align="left">no</td>
+<td align="left">+</td>
+<td align="left">riskRegression</td>
+</tr>
+<tr class="even">
+<td align="left">“direct_pseudo”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">outcome</td>
+<td align="left">no</td>
+<td align="left">- -</td>
+<td align="left">geepack, prodlim</td>
+</tr>
+<tr class="odd">
+<td align="left">“iptw_km”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">(no)</td>
+<td align="left">treatment</td>
+<td align="left">depends</td>
+<td align="left">++</td>
+<td align="left">-</td>
+</tr>
+<tr class="even">
+<td align="left">“iptw_cox”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">(no)</td>
+<td align="left">treatment</td>
+<td align="left">depends</td>
+<td align="left">++</td>
+<td align="left">-</td>
+</tr>
+<tr class="odd">
+<td align="left">“iptw_pseudo”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">treatment</td>
+<td align="left">depends</td>
+<td align="left">-</td>
+<td align="left">prodlim</td>
+</tr>
+<tr class="even">
+<td align="left">“matching”</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">treatment</td>
+<td align="left">depends</td>
+<td align="left">-</td>
+<td align="left">Matching</td>
+</tr>
+<tr class="odd">
+<td align="left">“emp_lik”</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">treatment</td>
+<td align="left">yes</td>
+<td align="left">+</td>
+<td align="left">MASS</td>
+</tr>
+<tr class="even">
+<td align="left">“aiptw”</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">both</td>
+<td align="left">no</td>
+<td align="left">-</td>
+<td align="left">riskRegression</td>
+</tr>
+<tr class="odd">
+<td align="left">“aiptw_pseudo”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">both</td>
+<td align="left">no</td>
+<td align="left">- -</td>
+<td align="left">geepack, prodlim</td>
+</tr>
+<tr class="even">
+<td align="left">“tmle”</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">both</td>
+<td align="left">no</td>
+<td align="left">- - -</td>
+<td align="left">concrete</td>
+</tr>
+<tr class="odd">
+<td align="left">“strat_amato”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">-</td>
+<td align="left">yes</td>
+<td align="left">+++</td>
+<td align="left">-</td>
+</tr>
+<tr class="even">
+<td align="left">“strat_nieto”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">-</td>
+<td align="left">yes</td>
+<td align="left">+++</td>
+<td align="left">-</td>
+</tr>
+<tr class="odd">
+<td align="left">“strat_cupples”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">-</td>
+<td align="left">yes</td>
+<td align="left">+++</td>
+<td align="left">-</td>
+</tr>
+<tr class="even">
+<td align="left">“iv_2SRIF”</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">-</td>
+<td align="left">no</td>
+<td align="left">+</td>
+<td align="left">-</td>
+</tr>
+<tr class="odd">
+<td align="left">“prox_iptw”</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">treatment</td>
+<td align="left">no</td>
+<td align="left">- -</td>
+<td align="left">numDeriv</td>
+</tr>
+<tr class="even">
+<td align="left">“prox_aiptw”</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">both</td>
+<td align="left">no</td>
+<td align="left">- -</td>
+<td align="left">numDeriv</td>
+</tr>
+<tr class="odd">
+<td align="left">“km”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">none</td>
+<td align="left">yes</td>
+<td align="left">+++</td>
+<td align="left">-</td>
+</tr>
+</tbody>
+</table>
+<p>For methods <code>&quot;iptw_km&quot;</code> and <code>&quot;iptw_cox&quot;</code> we
+wrote “(no)” in whether they support dependent censoring, because there
+is no direct implementation to handle it in this package. By supplying
+inverse probability of censoring weights to the
+<code>treatment_model</code> argument it is, however, possible to use
+those estimators to adjust for dependent censoring as well. If both
+inverse probability of treatment (or more general covariate balancing
+weights) <strong>and</strong> inverse probability of censoring weights
+should be used, the user can simply multiply the subject-level weights
+and supply the results to the <code>treatment_model</code> argument.</p>
+<p>The following table gives an overview of the supported input to the
+<code>treatment_model</code> argument for methods that require it:</p>
+<table>
+<colgroup>
+<col width="21%" />
+<col width="78%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="left">Allowed Input to treatment_model argument</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">“iptw_km”</td>
+<td align="left">glm or multinom object, weights, formula for
+weightit()</td>
+</tr>
+<tr class="even">
+<td align="left">“iptw_cox”</td>
+<td align="left">glm or multinom object, weights, formula for
+weightit()</td>
+</tr>
+<tr class="odd">
+<td align="left">“iptw_pseudo”</td>
+<td align="left">glm or multinom object, weights, formula for
+weightit()</td>
+</tr>
+<tr class="even">
+<td align="left">“matching”</td>
+<td align="left">glm object or propensity scores</td>
+</tr>
+<tr class="odd">
+<td align="left">“aiptw”</td>
+<td align="left">glm object</td>
+</tr>
+<tr class="even">
+<td align="left">“aiptw_pseudo”</td>
+<td align="left">glm or multinom object or propensity scores</td>
+</tr>
+<tr class="odd">
+<td align="left">“tmle”</td>
+<td align="left">vector of SuperLearner libraries</td>
+</tr>
+</tbody>
+</table>
+<p>After having created an <code>adjustedsurv</code> object using the
+<code>adjustedsurv()</code> function, the following functions can be
+used to create plots, transform the output or calculate further
+statistics:</p>
+<ul>
+<li><code>plot()</code>: Plots the estimated adjusted survival
+curves</li>
+<li><code>adjusted_curve_diff()</code>: Calculates differences in
+survival probabilities</li>
+<li><code>adjusted_curve_ratio()</code>: Calculates ratios of survival
+probabilities</li>
+<li><code>plot_curve_diff()</code>: Plots differences in survival
+probabilities</li>
+<li><code>plot_curve_ratio()</code>: Plots ratios of survival
+probabilities</li>
+<li><code>adjusted_surv_quantile()</code>: Calculates adjusted survival
+time quantiles</li>
+<li><code>adjusted_rmst()</code>: Calculates adjusted restricted mean
+survival times</li>
+<li><code>plot_rmst_curve()</code>: Plots adjusted restricted mean
+survival time curves</li>
+<li><code>adjusted_rmtl()</code>: Calculates adjusted restricted mean
+time lost</li>
+<li><code>plot_rmtl_curve()</code>: Plots adjusted restricted mean time
+lost curves</li>
+<li><code>adjusted_curve_test()</code>: Performs a test of adjusted
+survival curve equality in an interval</li>
+<li><code>as_ggsurvplot_df()</code>: Transforms the output to a concise
+<code>data.frame</code></li>
+</ul>
+</div>
+<div id="methods-in-adjustedcif" class="section level1">
+<h1>Methods in <code>adjustedcif()</code></h1>
+<p>The following table gives a general overview of all supported methods
+in <code>adjustedcif()</code>:</p>
+<table>
+<colgroup>
+<col width="5%" />
+<col width="10%" />
+<col width="10%" />
+<col width="10%" />
+<col width="8%" />
+<col width="5%" />
+<col width="7%" />
+<col width="4%" />
+<col width="9%" />
+<col width="6%" />
+<col width="5%" />
+<col width="6%" />
+<col width="5%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="left">Supports Unmeasured Confounding</th>
+<th align="left">Supports Categorical Treatments</th>
+<th align="left">Supports Continuous Confounders</th>
+<th align="left">Approximate SE available</th>
+<th align="left">Always in Bounds</th>
+<th align="left">Always non-increasing</th>
+<th align="left">Doubly-Robust</th>
+<th align="left">Supports Dependent Censoring</th>
+<th align="left">Type of Adjustment</th>
+<th align="left">Is Nonparametric</th>
+<th align="left">Computation Speed</th>
+<th align="left">Dependencies</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">“direct”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">outcome</td>
+<td align="left">no</td>
+<td align="left">+</td>
+<td align="left">riskRegression</td>
+</tr>
+<tr class="even">
+<td align="left">“direct_pseudo”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">outcome</td>
+<td align="left">no</td>
+<td align="left">- -</td>
+<td align="left">geepack, prodlim</td>
+</tr>
+<tr class="odd">
+<td align="left">“iptw”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">treatment</td>
+<td align="left">no</td>
+<td align="left">+</td>
+<td align="left">riskRegression</td>
+</tr>
+<tr class="even">
+<td align="left">“iptw_pseudo”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">treatment</td>
+<td align="left">depends</td>
+<td align="left">+</td>
+<td align="left">prodlim</td>
+</tr>
+<tr class="odd">
+<td align="left">“matching”</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">treatment</td>
+<td align="left">depends</td>
+<td align="left">-</td>
+<td align="left">Matching</td>
+</tr>
+<tr class="even">
+<td align="left">“aiptw”</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">both</td>
+<td align="left">no</td>
+<td align="left">-</td>
+<td align="left">riskRegression</td>
+</tr>
+<tr class="odd">
+<td align="left">“aiptw_pseudo”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">both</td>
+<td align="left">no</td>
+<td align="left">- -</td>
+<td align="left">geepack, prodlim</td>
+</tr>
+<tr class="even">
+<td align="left">“tmle”</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">both</td>
+<td align="left">no</td>
+<td align="left">- - -</td>
+<td align="left">concrete</td>
+</tr>
+<tr class="odd">
+<td align="left">“aalen_johansen”</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">none</td>
+<td align="left">yes</td>
+<td align="left">++</td>
+<td align="left">cmprsk</td>
+</tr>
+</tbody>
+</table>
+<p>The following table gives an overview of the supported input to the
+<code>treatment_model</code> argument for methods that require it:</p>
+<table>
+<colgroup>
+<col width="21%" />
+<col width="78%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="left">Allowed Input to treatment_model argument</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">“iptw”</td>
+<td align="left">glm or multinom object</td>
+</tr>
+<tr class="even">
+<td align="left">“iptw_pseudo”</td>
+<td align="left">glm or multinom object, weights, formula for
+weightit()</td>
+</tr>
+<tr class="odd">
+<td align="left">“matching”</td>
+<td align="left">glm object or propensity scores</td>
+</tr>
+<tr class="even">
+<td align="left">“aiptw”</td>
+<td align="left">glm object</td>
+</tr>
+<tr class="odd">
+<td align="left">“aiptw_pseudo”</td>
+<td align="left">glm or multinom object or propensity scores</td>
+</tr>
+<tr class="even">
+<td align="left">“tmle”</td>
+<td align="left">vector of SuperLearner libraries</td>
+</tr>
+</tbody>
+</table>
+<p>Note that method <code>&quot;iptw&quot;</code> currently does not support
+directly supplying weights or propensity scores. This is due to it
+relying on the <code>ate</code> function of the
+<code>riskRegression</code> package, which only accepts glm or multinom
+objects. This may be changed in the future.</p>
+<p>After having created an <code>adjustedcif</code> object using the
+<code>adjustedcif()</code> function, the following functions can be used
+to create plots, transform the output or calculate further
+statistics:</p>
+<ul>
+<li><code>plot()</code>: Plots the estimated adjusted CIFs</li>
+<li><code>adjusted_curve_diff()</code>: Calculates differences in
+CIFs</li>
+<li><code>adjusted_curve_ratio()</code>: Calculates ratios of CIFs</li>
+<li><code>plot_curve_diff()</code>: Plots differences in CIFs over
+time</li>
+<li><code>plot_curve_ratio()</code>: Plots ratios of survival
+probabilities</li>
+<li><code>adjusted_rmtl()</code>: Calculates adjusted restricted mean
+time lost</li>
+<li><code>plot_rmtl_curve()</code>: Plots adjusted restricted mean time
+lost curves</li>
+<li><code>adjusted_curve_test()</code>: Performs a test of adjusted CIF
+equality in an interval</li>
+</ul>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<p>Robin Denz, Renate Klaaßen-Mielke, and Nina Timmesfeld (2023). “A
+Comparison of Different Methods to Adjust Survival Curves for
+Confounders”. In: Statistics in Medicine 42.10, pp. 1461-1479</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

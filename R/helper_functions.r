@@ -148,8 +148,10 @@ specific_times <- function(plotdata, times, est="surv", interpolation="steps") {
       new_dat <- data.frame(time=times, cif=new_est, group=levs[i])
     } else if (est=="surv") {
       new_dat <- data.frame(time=times, surv=new_est, group=levs[i])
-    } else {
+    } else if (est=="diff") {
       new_dat <- data.frame(time=times, diff=new_est, group=levs[i])
+    } else if (est=="ratio") {
+      new_dat <- data.frame(time=times, ratio=new_est, group=levs[i])
     }
 
     if ("se" %in% colnames(plotdata)) {
@@ -171,8 +173,16 @@ specific_times <- function(plotdata, times, est="surv", interpolation="steps") {
       new_dat$se <- new_se
       new_dat$ci_lower <- new_ci_lower
       new_dat$ci_upper <- new_ci_upper
-
     }
+
+    # same as standard error, stays the same
+    if ("p_value" %in% colnames(plotdata)) {
+      new_p <- vapply(times, read_from_step_function, est="p_value",
+                      data=plotdata[which(plotdata$group==levs[i]), ],
+                      FUN.VALUE=numeric(1))
+      new_dat$p_value <- new_p
+    }
+
     new_plotdata[[i]] <- new_dat
   }
   new_plotdata <- as.data.frame(dplyr::bind_rows(new_plotdata))
@@ -219,6 +229,11 @@ calc_pseudo_surv <- function(data, ev_time, event, times, censoring_vars,
 ## this has to be done in order to correctly use na.action
 remove_unnecessary_covars <- function(data, method, variable, ev_time,
                                       event, ...) {
+
+  # nothing is removed for tmle
+  if (method=="tmle") {
+    return(data)
+  }
 
   args <- list(...)
 
@@ -283,6 +298,11 @@ remove_unnecessary_covars <- function(data, method, variable, ev_time,
   } else if (method=="strat_cupples" | method=="strat_amato" |
              method=="strat_nieto") {
     needed_covars <- c(needed_covars, args$adjust_vars)
+  } else if (method=="iv_2SRIF") {
+    needed_covars <- c(needed_covars, args$adjust_vars, args$instrument)
+  } else if (method=="prox_iptw" | method=="prox_aiptw") {
+    needed_covars <- c(needed_covars, args$adjust_vars, args$treatment_proxy,
+                       args$outcome_proxy)
   }
 
   # remove duplicates
@@ -301,7 +321,8 @@ load_needed_packages <- function(method, kind, treatment_model,
   if (kind=="surv") {
 
     # survival
-    if (method=="direct" | method=="km" | method=="strat_cupples") {
+    if (method=="direct" | method=="km" | method=="strat_cupples" |
+        method=="tmle" | method=="iv_2SRIF") {
       requireNamespace("survival")
     }
 
@@ -341,11 +362,25 @@ load_needed_packages <- function(method, kind, treatment_model,
       requireNamespace("MASS")
     }
 
+    # concrete
+    if (method=="tmle") {
+      requireNamespace("concrete")
+    }
+
+    # data.table
+    if (method=="tmle") {
+      requireNamespace("data.table")
+    }
+
+    if (method=="prox_iptw" | method=="prox_aiptw") {
+      requireNamespace("numDeriv")
+    }
+
   } else {
 
     # cmprsk
     if (method=="aalen_johansen") {
-      requireNamespace("survival")
+      requireNamespace("cmprsk")
     }
 
     # riskRegression
@@ -373,6 +408,16 @@ load_needed_packages <- function(method, kind, treatment_model,
     # geese
     if (method=="direct_pseudo" | method=="aiptw_pseudo") {
       requireNamespace("geepack")
+    }
+
+    # concrete
+    if (method=="tmle") {
+      requireNamespace("concrete")
+    }
+
+    # data.table
+    if (method=="tmle") {
+      requireNamespace("data.table")
     }
   }
 }
@@ -436,4 +481,114 @@ add_rows_with_zero <- function(plotdata, mode="surv") {
   }
 
   return(plotdata)
+}
+
+## perform isotonic regression on survival estimates
+iso_reg_surv <- function(plotdata) {
+
+  if (anyNA(plotdata$surv)) {
+    stop("Isotonic Regression cannot be used when there are missing",
+         " values in the final survival estimates.")
+  }
+
+  for (lev in levels(plotdata$group)) {
+    temp <- plotdata[plotdata$group==lev, ]
+    # to surv estimates
+    new <- rev(stats::isoreg(rev(temp$surv))$yf)
+    plotdata$surv[plotdata$group==lev] <- new
+
+    # shift confidence intervals accordingly
+    if ("ci_lower" %in% colnames(temp)) {
+      diff <- temp$surv - new
+
+      plotdata$ci_lower[plotdata$group==lev] <- temp$ci_lower - diff
+      plotdata$ci_upper[plotdata$group==lev] <- temp$ci_upper - diff
+    }
+  }
+
+  return(plotdata)
+}
+
+## force probabilities to be in the 0/1 range
+force_bounds_surv <- function(plotdata) {
+  plotdata <- within(plotdata, {
+    surv <- ifelse(surv < 0, 0, surv)
+    surv <- ifelse(surv > 1, 1, surv)
+  })
+
+  return(plotdata)
+}
+
+## isotonic regression for CIF estimates
+iso_reg_cif <- function(plotdata) {
+
+  if (anyNA(plotdata$cif)) {
+    stop("Isotonic Regression cannot be used when there are missing",
+         " values in the final CIF estimates.")
+  }
+
+  for (lev in levels(plotdata$group)) {
+    temp <- plotdata[plotdata$group==lev, ]
+
+    new <- stats::isoreg(temp$cif)$yf
+    plotdata$cif[plotdata$group==lev] <- new
+
+    if ("ci_lower" %in% colnames(temp)) {
+      diff <- temp$cif - new
+
+      plotdata$ci_lower[plotdata$group==lev] <- temp$ci_lower - diff
+      plotdata$ci_upper[plotdata$group==lev] <- temp$ci_upper - diff
+    }
+  }
+
+  return(plotdata)
+}
+
+## forcing bounds for CIF estimates
+force_bounds_cif <- function(plotdata) {
+  plotdata <- within(plotdata, {
+    cif <- ifelse(cif < 0, 0, cif)
+    cif <- ifelse(cif > 1, 1, cif)
+  })
+
+  return(plotdata)
+}
+
+## Given a mids object and our column names of interest, calculate the
+## maximum observed (cause-specific) event time
+max_observed_time <- function(mids, variable, ev_time, event, levs, cause,
+                              method, type) {
+
+  if (type=="surv") {
+    group_specific_methods <- c("km", "iptw_km", "iptw_cox",
+                                "strat_amato", "strat_nieto")
+  } else {
+    group_specific_methods <- c("aalen_johansen")
+  }
+
+  # keep only events
+  event_dat <- mids$data[mids$data[, event]==cause,]
+
+  if (method %in% group_specific_methods) {
+    # calculate maximal observed time in each group
+    out <- vector(mode="numeric", length=length(levs))
+
+    for (i in seq_len(length(levs))) {
+      dat_i <- event_dat[event_dat[, variable]==levs[i],]
+
+      if (nrow(dat_i)==0) {
+        max_t <- 0
+      } else {
+        max_t <- max(dat_i[, ev_time], na.rm=TRUE)
+      }
+
+      out[[i]] <- max_t
+    }
+  } else {
+    out <- max(event_dat[, ev_time], na.rm=TRUE)
+  }
+
+  max_t_group <- data.frame(group=levs, max_t=out)
+
+  return(max_t_group)
 }

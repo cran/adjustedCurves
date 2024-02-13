@@ -2,17 +2,19 @@
 \alias{adjustedcif}
 
 \title{
-Calculate Cause-Specific Confounder-Adjusted Cumulative Incidence Functions
+Estimate Cause-Specific Confounder-Adjusted Cumulative Incidence Functions
 }
 \description{
-This is one of two main functions of this R-Package. It allows the user to calculate cause-specific confounder-adjusted cumulative incidence functions in the presence of competing events using a variety of different methods. Some of these methods require additional packages to be installed and, depending on the specified method, there might be additional required arguments in the function call. More information is available on the documentation page of the respective \code{cif_method}.
+This is one of two main functions of this R-Package. It allows the user to estimate cause-specific confounder-adjusted cumulative incidence functions in the presence of competing events using a variety of different methods. Some of these methods require additional packages to be installed and, depending on the specified method, there might be additional required arguments in the function call. More information is available on the documentation page of the respective \code{cif_method}.
 }
 \usage{
 adjustedcif(data, variable, ev_time, event, cause,
             method, conf_int=FALSE, conf_level=0.95,
             times=NULL, bootstrap=FALSE, n_boot=500,
             n_cores=1, na.action=options()$na.action,
-            clean_data=TRUE, ...)
+            clean_data=TRUE, iso_reg=FALSE,
+            force_bounds=FALSE, mi_extrapolation=FALSE,
+            ...)
 }
 
 \arguments{
@@ -29,13 +31,13 @@ A character string specifying the variable indicating the time-to-event or time-
 A character string specifying the numeric event indicator. The censoring indicator should be coded as 0 and all other events of interest as 1, 2, etc. Must be a valid column name of \code{data}.
   }
   \item{cause}{
-The cause of interest for which the cumulative incidence functions should be calculated. Should be a number that appears in the \code{event} column of \code{data}.
+The cause of interest for which the cumulative incidence functions should be estimated. Should be a number that appears in the \code{event} column of \code{data}.
   }
   \item{method}{
 A character string specifying the adjustment method to use. Case sensitive. See details.
   }
   \item{conf_int}{
-A logical variable, indicating whether the asymptotic variances and confidence intervals of the cumulative incidence should be calculated. Not available for all methods. More information can be found in the documentation of each method. For an alternative way to get confidence intervals, see the \code{bootstrap} argument.
+A logical variable, indicating whether the asymptotic variances and confidence intervals of the cumulative incidence should be estimated. Not available for all methods. More information can be found in the documentation of each method. For an alternative way to get confidence intervals, see the \code{bootstrap} argument.
   }
   \item{conf_level}{
 A number specifying the confidence level of asymptotic and/or bootstrap confidence intervals.
@@ -58,12 +60,21 @@ How missing values should be handled. Can be one of: na.fail, na.omit, na.pass o
   \item{clean_data}{
 If \code{TRUE} all columns which are not needed for the estimation are removed from \code{data} before any further calculations are performed. This ensures that calls to \code{na.omit} (see argument \code{na.action}) do not remove rows which are fully observed in respect to relevant columns due to missing values in irrelevant columns. Set to \code{FALSE} to skip this step. Usually this argument can be ignored. When using non-standard outcome models however it should be set to \code{FALSE}.
   }
+  \item{iso_reg}{
+Either \code{TRUE} or \code{FALSE} (default), controlling whether isotonic regression is performed on the resulting failure probability estimates. This can be used to ensure that the CIFs are non-decreasing. Since only a few methods may exhibit this problem, this argument is only relevant for some methods (see method specific documentation).
+  }
+  \item{force_bounds}{
+Either \code{TRUE} or \code{FALSE} (default), controlling whether the resulting failure probability estimates should be forced to lie between 0 and 1. If \code{TRUE} and there are values higher than 1, they are simply set to 1. Values lower than 0 are similarly set to 0. Since only a few methods may exhibit this problem, this argument is only relevant for some methods (see method specific documentation).
+  }
+  \item{mi_extrapolation}{
+Whether to allow extrapolation due to imputed survival times or not. This argument is only relevant when using multiply imputed \code{data} with missing covariates in \code{variable}, \code{ev_time} or \code{event}. Depending on the algorithm used to obtain the imputed datasets, it may be possible that one or more imputed datasets contain survival times in a group that are larger than the maximum observed survival time in that group. This may lead to unwanted extrapolation (e.g. the survival curves extending further than they should). By keeping this argument at \code{FALSE}, these times are removed from the output. If set to \code{TRUE}, all available estimates will be used.
+  }
   \item{...}{
 Further arguments passed to the respective \code{cif_method}. For example when using \code{method="direct"} all further arguments are passed to the \code{cif_direct} function. See details.
   }
 }
 \details{
-The primary purpose of the \code{adjustedcif} function is to provide a convenient way to calculate confounder-adjusted cumulative incidence functions using any of the methods provided in the literature. A \code{\link[=plot.adjustedcif]{plot}} method is provided to graphically display the estimated cumulative incidence functions as well. Currently the following methods can be used:
+The primary purpose of the \code{adjustedcif} function is to provide a convenient way to estimate confounder-adjusted cumulative incidence functions using any of the methods provided in the literature. A \code{\link[=plot.adjustedcif]{plot}} method is provided to graphically display the estimated cumulative incidence functions as well. Currently the following methods can be used:
 
 \itemize{
   \item{"\link[=cif_direct]{direct}": Direct Standardization based on a model describing the outcome mechanism (\code{\link[riskRegression]{CSC}}, \code{\link[riskRegression]{FGR}}, ..).}
@@ -73,10 +84,11 @@ The primary purpose of the \code{adjustedcif} function is to provide a convenien
   \item{"\link[=cif_matching]{matching}": Using Propensity Score Matching to estimate the adjusted CIFs.}
   \item{"\link[=cif_aiptw]{aiptw}": An Augmented Inverse Probability of Treatment Weighting estimator.}
   \item{"\link[=cif_aiptw_pseudo]{aiptw_pseudo}": An Augmented Inverse Probability of Treatment Weighting estimator using Pseudo-Values.}
+  \item{"\link[=cif_tmle]{tmle}": Targeted Maximum Likelihood Estimation for continuous time time-to-event data with competing events.}
   \item{"\link[=cif_aalen_johansen]{aalen_johansen}": A simple stratified Aalen-Johansen estimator without any form of adjustment.}
 }
 
-A short description of each method is contained in the documentation of the respective \code{cif_method} function. For more detailed descriptions the cited literature in that same documentation can be used. The documentation for \code{method="direct"} for example can be accessed using \code{?cif_direct}.
+A short description of each method is contained in the documentation of the respective \code{cif_method} function. A concise overview of the supported functionality of each method can be found in the associated vignette (\code{vignette(topic="method_overview", package="adjustedCurves")}). For more detailed descriptions the cited literature in the respective documentation pages can be used. The documentation for \code{method="direct"} for example can be accessed using \code{?cif_direct}.
 
 \strong{\emph{Required & Optional Arguments}}
 
@@ -84,17 +96,17 @@ Every method requires the specification of the \code{data}, \code{variable}, \co
 
 \strong{\emph{Confidence Intervals}}
 
-For most methods approximations for the asymptotic variance of point estimates of the CIF have been proposed in the literature. Where available, those can be calculated and added to the output object using \code{conf_int=TRUE}. It is however recommended to use bootstrapping to estimate the variance instead, which can be done by setting \code{bootstrap=TRUE}. The \code{n_boot} argument is set to 500 by default. This number was chosen because it worked well in simulations but it does not guarantee convergence in practice. Users are recommended to inspect the bootstrapped estimates and adjust the number of replications accordingly. To allow faster bootstrapping the user can choose to run the function on multiple CPU cores in parallel using the \code{n_cores} argument.
+For most methods approximations for the asymptotic variance of point estimates of the CIF have been proposed in the literature. Where available, those can be estimated and added to the output object using \code{conf_int=TRUE}. It is however recommended to use bootstrapping to estimate the variance instead, which can be done by setting \code{bootstrap=TRUE}. The \code{n_boot} argument is set to 500 by default. This number was chosen because it worked well in simulations but it does not guarantee convergence in practice. Users are recommended to inspect the bootstrapped estimates and adjust the number of replications accordingly. To allow faster bootstrapping the user can choose to run the function on multiple CPU cores in parallel using the \code{n_cores} argument.
 
 \strong{\emph{Missing Data}}
 
 There are two ways to deal with missing data using this function. The first is using the \code{na.action} argument. It simply calls the respective \code{na.action} function on the data before doing any further processing. By using \code{na.action="na.omit"} for example, only rows with complete data are kept for the analysis.
 
-Alternatively, this function also supports the use of multiple imputation via the \pkg{mice} package. Instead of supplying a single data.frame, the user should create a \code{mids} object using the \code{mice} function and directly pass this to the \code{data} argument. When methods are used which rely on previously estimated treatment or outcome models such as \code{"direct"} or \code{"aiptw"}, the user is required to supply a \code{mira} object instead of a single model. In other words: the models have to be fit on every imputed dataset before supplying them to this function. See \code{?mice} and the associated documentation for more information on how to use multiple imputation. When using \code{bootstrap=TRUE} and multiple imputation, the bootstrapping is performed on every imputed dataset separately. Cumulative Incidences are simply averaged across the imputed datasets according to Rubins Rule. Confidence intervals are calculated by first averaging the standard errors over all imputed datasets and afterwards using this pooled value to obtain a new confidence interval with the normal approximation. This method has only been tested with missing values in covariates. It is not clear how good this works with missing values in \code{ev_time} or \code{event} so users should be cautious in those cases.
+Alternatively, this function also supports the use of multiple imputation via the \pkg{mice} package. Instead of supplying a single data.frame, the user should create a \code{mids} object using the \code{mice} function and directly pass this to the \code{data} argument. When methods are used which rely on previously estimated treatment or outcome models such as \code{"direct"} or \code{"aiptw"}, the user is required to supply a \code{mira} object instead of a single model. In other words: the models have to be fit on every imputed dataset before supplying them to this function. See \code{?mice} and the associated documentation for more information on how to use multiple imputation. When using \code{bootstrap=TRUE} and multiple imputation, the bootstrapping is performed on every imputed dataset separately. Cumulative Incidences are simply averaged across the imputed datasets according to Rubins Rule. Confidence intervals are calculated by first averaging the standard errors over all imputed datasets and afterwards using this pooled value to obtain a new confidence interval with the normal approximation.
 
 \strong{\emph{Competing Risks}}
 
-This function is meant to be used for data containing multiple competing risks. If the data does not contain competing-events, it is recommended to use the \code{adjustedsurv} function instead. It does not calculate the CIF directly, but the CIF can be calculated from the survival using CIF = 1 - \eqn{S(t)}. This can be done automatically in the \code{plot.adjustedsurv} function using \code{cif=TRUE}.
+This function is meant to be used for data containing multiple competing risks. If the data does not contain competing-events, it is recommended to use the \code{adjustedsurv} function instead. It does not estimate the CIF directly, but the CIF can be calculated from the survival using CIF = 1 - \eqn{S(t)}. This can be done automatically in the \code{plot.adjustedsurv} function using \code{cif=TRUE}.
 
 \strong{\emph{Graphical Displays}}
 
@@ -129,7 +141,9 @@ Some method specific objects might also be contained in the output.
 }
 
 \references{
-Relevant literature can be found in the respective \code{cif_method} documentation.
+Robin Denz, Renate Klaaßen-Mielke, and Nina Timmesfeld (2023). "A Comparison of Different Methods to Adjust Survival Curves for Confounders". In: Statistics in Medicine 42.10, pp. 1461-1479
+
+More relevant literature can be found in the respective \code{cif_method} documentation.
 }
 \author{
 The function itself was written by Robin Denz, but some \code{cif_method} functions include wrappers for functions written by other people. More information can be found in the respective \code{cif_method} documentation.
@@ -261,7 +275,7 @@ adj <- adjustedcif(data=mids,
                    cause=1,
                    treatment_model=group ~ x1 + x2 + x5 + x6,
                    weight_method="ps")
-plot(adj)
+plot(adj, force_bounds=TRUE, iso_reg=TRUE)
 
 # More specific examples can be found in the documentation of each
 # respective cif_method. See ?cif_ + "method" for more information.

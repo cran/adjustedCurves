@@ -51,8 +51,8 @@ The standard error of this estimator can be approximated by calculation a weight
 Adds the following additional objects to the output of the \code{adjustedcif} function:
 
 \itemize{
-\item{\code{pseudo_values}: }{The matrix of estimated pseudo-values.}
-\item{\code{weights}: }{The final weights used in the analysis.}
+\item \code{pseudo_values}: The matrix of estimated pseudo-values.
+\item \code{weights}: The final weights used in the analysis.
 }
 
 }
@@ -96,7 +96,7 @@ adjcif <- adjustedcif(data=sim_dat,
                       cause=1,
                       method="iptw_pseudo",
                       treatment_model=glm_mod)
-plot(adjcif)
+plot(adjcif, force_bounds=TRUE, iso_reg=TRUE)
 
 # Alternatively, use custom weights
 # In this example we use weights calculated using the propensity score,
@@ -111,7 +111,7 @@ adjcif <- adjustedcif(data=sim_dat,
                       cause=1,
                       method="iptw_pseudo",
                       treatment_model=weights)
-plot(adjcif)
+plot(adjcif, force_bounds=TRUE, iso_reg=TRUE)
 
 # And a third alternative: use the WeightIt package
 # here an example with equal results to the ones above:
@@ -123,11 +123,9 @@ adjcif <- adjustedcif(data=sim_dat,
                       method="iptw_pseudo",
                       treatment_model=group ~ x1 + x3 + x5 + x6,
                       weight_method="ps")
-plot(adjcif)
+plot(adjcif, force_bounds=TRUE, iso_reg=TRUE)
 
-# not run to avoid dependency on optweight
-if (interactive()) {
-# here an example using Optimization-Based Weighting:
+# here an example using Entropy Balancing Weighting:
 adjcif <- adjustedcif(data=sim_dat,
                       variable="group",
                       ev_time="time",
@@ -135,7 +133,6 @@ adjcif <- adjustedcif(data=sim_dat,
                       cause=1,
                       method="iptw_pseudo",
                       treatment_model=group ~ x1 + x3 + x5 + x6,
-                      weight_method="optweight")
-plot(adjcif)
-}
+                      weight_method="ebal")
+plot(adjcif, force_bounds=TRUE, iso_reg=TRUE)
 }

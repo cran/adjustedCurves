@@ -60,8 +60,8 @@ Additionally, covariate-dependent censoring can be accounted for by using invers
 Adds the following additional objects to the output of the \code{adjustedsurv} function:
 
 \itemize{
-\item{\code{pseudo_values}: }{The matrix of estimated pseudo-values.}
-\item{\code{weights}: }{The final weights used in the analysis.}
+\item \code{pseudo_values}: The matrix of estimated pseudo-values.
+\item \code{weights}: The final weights used in the analysis.
 }
 }
 \references{
@@ -104,7 +104,9 @@ adjsurv <- adjustedsurv(data=sim_dat,
                         ev_time="time",
                         event="event",
                         method="iptw_km",
-                        treatment_model=glm_mod)
+                        treatment_model=glm_mod,
+                        force_bounds=TRUE,
+                        iso_reg=TRUE)
 
 # Alternatively, use custom weights
 # In this example we use weights calculated using the propensity score,
@@ -117,7 +119,9 @@ adjsurv <- adjustedsurv(data=sim_dat,
                         ev_time="time",
                         event="event",
                         method="iptw_km",
-                        treatment_model=weights)
+                        treatment_model=weights,
+                        force_bounds=TRUE,
+                        iso_reg=TRUE)
 
 # And a third alternative: use the WeightIt package
 # here an example with equal results to the ones above:
@@ -127,17 +131,18 @@ adjsurv <- adjustedsurv(data=sim_dat,
                         event="event",
                         method="iptw_km",
                         treatment_model=group ~ x1 + x3 + x5 + x6,
-                        weight_method="ps")
+                        weight_method="ps",
+                        force_bounds=TRUE,
+                        iso_reg=TRUE)
 
-# not run to avoid dependency on optweight
-if (interactive()) {
-# here an example using Optimization-Based Weighting:
+# here an example using Entropy Balancing Weighting:
 adjsurv <- adjustedsurv(data=sim_dat,
                         variable="group",
                         ev_time="time",
                         event="event",
                         method="iptw_km",
                         treatment_model=group ~ x1 + x3 + x5 + x6,
-                        weight_method="optweight")
-}
+                        weight_method="ebal",
+                        force_bounds=TRUE,
+                        iso_reg=TRUE)
 }

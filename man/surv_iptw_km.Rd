@@ -48,8 +48,8 @@ Asymptotic variances are calculated using the equations given in Xie and Liu (20
 Adds the following additional objects to the output of the \code{adjustedsurv} function:
 
 \itemize{
-\item{\code{weights}: }{The final weights used in the analysis.}
-\item{\code{n_at_risk}: }{A \code{data.frame} containing the weighted number at risk and weighted number of events used in the calculations at each point in time for both groups.}
+\item \code{weights}: The final weights used in the analysis.
+\item \code{n_at_risk}: A \code{data.frame} containing the weighted number at risk and weighted number of events used in the calculations at each point in time for both groups.
 }
 }
 \references{
@@ -107,15 +107,12 @@ adjsurv <- adjustedsurv(data=sim_dat,
                         treatment_model=group ~ x1 + x3 + x5 + x6,
                         weight_method="ps")
 
-# not run to avoid dependency on optweight
-if (interactive()) {
-# here an example using Optimization-Based Weighting:
+# here an example using Entropy Balancing Weighting:
 adjsurv <- adjustedsurv(data=sim_dat,
                         variable="group",
                         ev_time="time",
                         event="event",
                         method="iptw_km",
                         treatment_model=group ~ x1 + x3 + x5 + x6,
-                        weight_method="optweight")
-}
+                        weight_method="ebal")
 }

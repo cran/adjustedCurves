@@ -44,8 +44,8 @@ When estimating the \code{geese} model the \code{ev_time} variable is used as a 
 Adds the following additional objects to the output of the \code{adjustedcif} function:
 
 \itemize{
-\item{\code{pseudo_values}: }{The matrix of estimated pseudo-values.}
-\item{\code{geese_model}: }{The geese model used to make the predictions.}
+\item \code{pseudo_values}: The matrix of estimated pseudo-values.
+\item \code{geese_model}: The geese model used to make the predictions.
 }
 }
 \references{
@@ -79,7 +79,9 @@ adjcif <- adjustedcif(data=sim_dat,
                       cause=1,
                       method="direct_pseudo",
                       outcome_vars=c("x1", "x2", "x3", "x4", "x5", "x6"),
-                      type_time="factor")
+                      type_time="factor",
+                      force_bounds=TRUE,
+                      iso_reg=TRUE)
 plot(adjcif)
 
 # with time modelled as B-Spline using 5 degrees of freedom
@@ -91,7 +93,9 @@ adjcif <- adjustedcif(data=sim_dat,
                       method="direct_pseudo",
                       outcome_vars=c("x1", "x2", "x3", "x4", "x5", "x6"),
                       type_time="bs",
-                      spline_df=5)
+                      spline_df=5,
+                      force_bounds=TRUE,
+                      iso_reg=TRUE)
 
 # plot the curves
 plot(adjcif)

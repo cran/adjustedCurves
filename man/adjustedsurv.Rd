@@ -2,17 +2,19 @@
 \alias{adjustedsurv}
 
 \title{
-Calculate Confounder-Adjusted Survival Curves
+Estimate Confounder-Adjusted Survival Curves
 }
 \description{
-This is one of the two main functions of this R-Package. It allows the user to calculate confounder-adjusted survival curves using a variety of different methods. Some of these methods require additional packages to be installed and, depending on the specified method, there might be additional required arguments in the function call. More information is available on the documentation page of the respective \code{surv_method}.
+This is one of the two main functions of this R-Package. It allows the user to estimate confounder-adjusted survival curves using a variety of different methods. Some of these methods require additional packages to be installed and, depending on the specified method, there might be additional required arguments in the function call. More information is available on the documentation page of the respective \code{surv_method}.
 }
 \usage{
 adjustedsurv(data, variable, ev_time, event, method,
              conf_int=FALSE, conf_level=0.95, times=NULL,
              bootstrap=FALSE, n_boot=500,
              n_cores=1, na.action=options()$na.action,
-             clean_data=TRUE, ...)
+             clean_data=TRUE, iso_reg=FALSE,
+             force_bounds=FALSE, mi_extrapolation=FALSE,
+             ...)
 }
 
 \arguments{
@@ -32,7 +34,7 @@ A character string specifying the binary event indicator. Must be a valid column
 A character string specifying the adjustment method to use. Case sensitive. See details.
   }
   \item{conf_int}{
-A logical variable, indicating whether the asymptotic variances and confidence intervals of the survival probabilities should be calculated. Not available for all methods. More information can be found in the documentation of each method. For an alternative way to get confidence intervals, see the \code{bootstrap} argument.
+A logical variable, indicating whether the asymptotic variances and confidence intervals of the survival probabilities should be estimated. Not available for all methods. More information can be found in the documentation of each method. For an alternative way to get confidence intervals, see the \code{bootstrap} argument.
   }
   \item{conf_level}{
 A number specifying the confidence level of asymptotic and/or bootstrap confidence intervals.
@@ -55,12 +57,21 @@ How missing values should be handled. Can be one of: na.fail, na.omit, na.pass o
   \item{clean_data}{
 If \code{TRUE} all columns which are not needed for the estimation are removed from \code{data} before any further calculations are performed. This ensures that calls to \code{na.omit} (see argument \code{na.action}) do not remove rows which are fully observed in respect to relevant columns due to missing values in irrelevant columns. Set to \code{FALSE} to skip this step. Usually this argument can be ignored. When using non-standard outcome models however it should be set to \code{FALSE}.
   }
+  \item{iso_reg}{
+Either \code{TRUE} or \code{FALSE} (default), controlling whether isotonic regression is performed on the resulting survival probability estimates. This can be used to ensure that the survival curves are non-increasing. Since only a few methods may have this problem, this argument is only relevant for some methods (see method specific documentation).
+  }
+  \item{force_bounds}{
+Either \code{TRUE} or \code{FALSE} (default), controlling whether the resulting survival probability estimates should be forced to lie between 0 and 1. If \code{TRUE} and there are values higher than 1, they are simply set to 1. Values lower than 0 are similarly set to 0. Since only a few methods may have this problem, this argument is only relevant for some methods (see method specific documentation).
+  }
+  \item{mi_extrapolation}{
+Whether to allow extrapolation due to imputed survival times or not. This argument is only relevant when using multiply imputed \code{data} with missing covariates in \code{variable}, \code{ev_time} or \code{event}. Depending on the algorithm used to obtain the imputed datasets, it may be possible that one or more imputed datasets contain survival times in a group that are larger than the maximum observed survival time in that group. This may lead to unwanted extrapolation (e.g. the survival curves extending further than they should). By keeping this argument at \code{FALSE}, these times are removed from the output. If set to \code{TRUE}, all available estimates will be used.
+  }
   \item{...}{
 Further arguments passed to the respective \code{surv_method}. For example when using \code{method="direct"} all further arguments are passed to the \code{surv_direct} function. See details.
   }
 }
 \details{
-The primary purpose of the \code{adjustedsurv} function is to provide a convenient way to calculate confounder-adjusted survival curves using any of the methods provided in the literature. A \code{\link[=plot.adjustedsurv]{plot}} method is provided to graphically display the estimated survival curves as well. Currently the following methods can be used:
+The primary purpose of the \code{adjustedsurv} function is to provide a convenient way to estimate confounder-adjusted survival curves using any of the methods provided in the literature. A \code{\link[=plot.adjustedsurv]{plot}} method is provided to graphically display the estimated survival curves as well. Currently the following methods can be used:
 
 \itemize{
   \item{"\link[=surv_direct]{direct}": Direct Standardization based on a previously fit model (Cox-Regression, ...).}
@@ -72,13 +83,17 @@ The primary purpose of the \code{adjustedsurv} function is to provide a convenie
   \item{"\link[=surv_emp_lik]{emp_lik}": An Empirical Likelihood based estimator.}
   \item{"\link[=surv_aiptw]{aiptw}": An Augmented Inverse Probability of Treatment Weighting estimator.}
   \item{"\link[=surv_aiptw_pseudo]{aiptw_pseudo}": An Augmented Inverse Probability of Treatment Weighting estimator using Pseudo-Values.}
+  \item{"\link[=surv_tmle]{tmle}": Targeted Maximum Likelihood Estimation for continuously distributed time-to-event data.}
   \item{"\link[=surv_strat_amato]{strat_amato}": A method based on stratification and weighting by Amato (1988).}
   \item{"\link[=surv_strat_nieto]{strat_nieto}": A method based on stratification and weighting by Gregory (1988) and Nieto & Coresh (1996).}
   \item{"\link[=surv_strat_cupples]{strat_cupples}": A method based on stratification and weighting by Cupples et al. (1995).}
+  \item{"\link[=surv_iv_2SRIF]{iv_2SRIF}": An instrumental variable method based on two stage residual inclusion with a frailty term.}
+  \item{"\link[=surv_prox_iptw]{prox_iptw}": Proximal causal inference based inverse probability of treatment weighting.}
+  \item{"\link[=surv_prox_aiptw]{prox_aiptw}": Proximal causal inference based augmented inverse probability of treatment weighting.}
   \item{"\link[=surv_km]{km}": A simple stratified Kaplan-Meier estimator without any form of adjustment.}
 }
 
-A short description of each method is contained in the documentation of the respective \code{surv_method} function. For more detailed descriptions the cited literature in that same documentation can be used. The documentation for \code{method="direct"} for example can be accessed using \code{?surv_direct}.
+A short description of each method is contained in the documentation of the respective \code{surv_method} function. A concise overview of the supported functionality of each method can be found in the associated vignette (\code{vignette(topic="method_overview", package="adjustedCurves")}). For more detailed descriptions the cited literature in the respective documentation pages can be used. The documentation for \code{method="direct"} for example can be accessed using \code{?surv_direct}.
 
 \strong{\emph{Required & Optional Arguments}}
 
@@ -86,17 +101,17 @@ Every method requires the specification of the \code{data}, \code{variable}, \co
 
 \strong{\emph{Confidence Intervals}}
 
-For most methods approximations for the asymptotic variance of point estimates of the survival function have been proposed in the literature. Where available, those can be calculated and added to the output object using \code{conf_int=TRUE}. It is however recommended to use bootstrapping to estimate the variance instead, which can be done by setting \code{bootstrap=TRUE}. The \code{n_boot} argument is set to 500 by default. This number was chosen because it worked well in simulations but it does not guarantee convergence in practice. Users are recommended to inspect the bootstrapped estimates and adjust the number of replications accordingly. To allow faster bootstrapping the user can choose to run the function on multiple CPU cores in parallel using the \code{n_cores} argument.
+For most methods approximations for the asymptotic variance of point estimates of the survival function have been proposed in the literature. Where available, those can be estimated and added to the output object using \code{conf_int=TRUE}. It is however recommended to use bootstrapping to estimate the variance instead, which can be done by setting \code{bootstrap=TRUE}. The \code{n_boot} argument is set to 500 by default. This number was chosen because it worked well in simulations but it does not guarantee convergence in practice. Users are recommended to inspect the bootstrapped estimates and adjust the number of replications accordingly. To allow faster bootstrapping the user can choose to run the function on multiple CPU cores in parallel using the \code{n_cores} argument.
 
 \strong{\emph{Missing Data}}
 
 There are two ways to deal with missing data using this function. The first is using the \code{na.action} argument. It simply calls the respective \code{na.action} function on the data before doing any further processing. By using \code{na.action="na.omit"} for example, only rows with complete data are kept for the analysis.
 
-Alternatively, this function also supports the use of multiple imputation via the \pkg{mice} package. Instead of supplying a single data.frame, the user should create a \code{mids} object using the \code{mice} function and directly pass this to the \code{data} argument. When methods are used which rely on previously estimated treatment assignment or outcome models such as \code{"direct"} or \code{"aiptw"}, the user is required to supply a \code{mira} object instead of a single model. In other words: the models have to be fit on every imputed dataset before supplying them to this function. See \code{?mice} and the associated documentation for more information on how to use multiple imputation. When using \code{bootstrap=TRUE} and multiple imputation, the bootstrapping is performed on every imputed dataset separately. Survival probabilities are simply averaged across the imputed datasets according to Rubins Rule. Confidence intervals are calculated by first averaging the standard errors over all imputed datasets and afterwards using this pooled value to obtain a new confidence interval with the normal approximation. This method has only been tested with missing values in covariates. It is not clear how good this works with missing values in \code{ev_time} or \code{event} so users should be cautious in those cases.
+Alternatively, this function also supports the use of multiple imputation via the \pkg{mice} package. Instead of supplying a single data.frame, the user should create a \code{mids} object using the \code{mice} function and directly pass this to the \code{data} argument. When methods are used which rely on previously estimated treatment assignment or outcome models such as \code{"direct"} or \code{"aiptw"}, the user is required to supply a \code{mira} object instead of a single model. In other words: the models have to be fit on every imputed dataset before supplying them to this function. See \code{?mice} and the associated documentation for more information on how to use multiple imputation. When using \code{bootstrap=TRUE} and multiple imputation, the bootstrapping is performed on every imputed dataset separately. Survival probabilities are simply averaged across the imputed datasets according to Rubins Rule. Confidence intervals are calculated by first averaging the standard errors over all imputed datasets and afterwards using this pooled value to obtain a new confidence interval with the normal approximation.
 
 \strong{\emph{Competing Risks}}
 
-If the data contains competing-risks, this function cannot be used. It is however possible to calculate confounder-adjusted cause-specific cumulative incidence functions using the \code{adjustedcif} function.
+If the data contains competing-risks, this function cannot be used. It is however possible to estimate confounder-adjusted cause-specific cumulative incidence functions using the \code{adjustedcif} function.
 
 \strong{\emph{Graphical Displays}}
 
@@ -133,7 +148,7 @@ Some method specific objects might also be contained in the output.
 }
 
 \references{
-Robin Denz, Renate Klaaßen-Mielke, and Nina Timmesfeld (2023). "A Comparison of Different Methods to Adjust Survival Curves for Confounders".  In: Statistics in Medicine InPrint
+Robin Denz, Renate Klaaßen-Mielke, and Nina Timmesfeld (2023). "A Comparison of Different Methods to Adjust Survival Curves for Confounders". In: Statistics in Medicine 42.10, pp. 1461-1479
 
 Other relevant literature can be found in the respective \code{surv_method} documentation.
 }

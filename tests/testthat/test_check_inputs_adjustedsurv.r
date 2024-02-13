@@ -86,7 +86,7 @@ test_that("variable is really wrong", {
                                          n_boot=2,
                                          na.action="na.omit",
                                          clean_data=TRUE),
-               paste0("Arguments 'variable', 'ev_time', 'event' and 'method' ",
+               paste0("Arguments 'variable', 'ev_time' and 'event' ",
                       "must be character strings, specifying variables ",
                       "in 'data'."))
 })
@@ -222,8 +222,8 @@ test_that("event wrong type", {
                                          n_boot=2,
                                          na.action="na.omit",
                                          clean_data=TRUE),
-               paste0("Arguments 'variable', 'ev_time', 'event' and ",
-                      "'method' must be ", "character strings, specifying ",
+               paste0("Arguments 'variable', 'ev_time' and 'event'",
+                      " must be ", "character strings, specifying ",
                       "variables in 'data'."))
 })
 
@@ -1401,56 +1401,4 @@ test_that("wrong censoring_model with mira", {
                paste0("When using multiple imputation, mira objects need to ",
                       "be supplied to 'censoring_model' instead of single ",
                       "models. See documentation."))
-})
-
-test_that("warning with missing values in variable", {
-  expect_warning(check_inputs_adjustedsurv(data=mids_na_group,
-                                           variable="group",
-                                           ev_time="time",
-                                           event="event",
-                                           method="km",
-                                           conf_int=TRUE,
-                                           conf_level=0.95,
-                                           times=NULL,
-                                           bootstrap=FALSE,
-                                           n_boot=2,
-                                           na.action="na.omit",
-                                           clean_data=TRUE),
-               paste0("Using multiple imputation with missing values in ",
-                      "'variable' has not been tested yet. Use with caution."))
-})
-
-test_that("warning with missing values in ev_time", {
-  expect_warning(check_inputs_adjustedsurv(data=mids_na_time,
-                                           variable="group",
-                                           ev_time="time",
-                                           event="event",
-                                           method="km",
-                                           conf_int=TRUE,
-                                           conf_level=0.95,
-                                           times=NULL,
-                                           bootstrap=FALSE,
-                                           n_boot=2,
-                                           na.action="na.omit",
-                                           clean_data=TRUE),
-  paste0("Using multiple imputation with missing values in 'ev_time' ",
-         "variable has not been tested yet. Use with caution."))
-})
-
-test_that("warning with missing values in event", {
-  expect_warning(check_inputs_adjustedsurv(data=mids_na_event,
-                                           variable="group",
-                                           ev_time="time",
-                                           event="event",
-                                           method="km",
-                                           conf_int=TRUE,
-                                           conf_level=0.95,
-                                           times=NULL,
-                                           bootstrap=FALSE,
-                                           n_boot=2,
-                                           na.action="na.omit",
-                                           clean_data=TRUE),
-                 paste0("Using multiple imputation with missing values in ",
-                        "'event' variable has not been tested yet. ",
-                        "Use with caution."))
 })

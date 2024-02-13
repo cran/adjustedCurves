@@ -48,9 +48,9 @@ By default this method uses a a robust sandwich-type variance estimator (\code{r
 Adds the following additional objects to the output of the \code{adjustedsurv} function:
 
 \itemize{
-\item{\code{cox_model}: }{The stratified and weighted \code{coxph} model.}
-\item{\code{survfit}: }{The \code{survfit} object created using the \code{cox_model} object.}
-\item{\code{weights}: }{The final weights used in the analysis.}
+\item \code{cox_model}: The stratified and weighted \code{coxph} model.
+\item \code{survfit}: The \code{survfit} object created using the \code{cox_model} object.
+\item \code{weights}: The final weights used in the analysis.
 }
 
 Returns a \code{list} object containing a \code{data.frame} with the estimated adjusted survival probabilities for some points in time for each level of \code{variable}, the weighted \code{coxph} model, the weighted \code{survfit} object and the weights used in the analysis.
@@ -113,15 +113,12 @@ adjsurv <- adjustedsurv(data=sim_dat,
                         treatment_model=group ~ x1 + x3 + x5 + x6,
                         weight_method="ps")
 
-# not run to avoid dependency on optweight
-if (interactive()) {
-# here an example using Optimization-Based Weighting:
+# here an example using Entropy Balancing Weighting:
 adjsurv <- adjustedsurv(data=sim_dat,
                         variable="group",
                         ev_time="time",
                         event="event",
                         method="iptw_cox",
                         treatment_model=group ~ x1 + x3 + x5 + x6,
-                        weight_method="optweight")
-}
+                        weight_method="ebal")
 }

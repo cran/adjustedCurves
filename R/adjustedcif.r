@@ -23,7 +23,9 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
                         conf_int=FALSE, conf_level=0.95, times=NULL,
                         bootstrap=FALSE, n_boot=500, n_cores=1,
                         na.action=options()$na.action,
-                        clean_data=TRUE, ...) {
+                        clean_data=TRUE, iso_reg=FALSE,
+                        force_bounds=FALSE, mi_extrapolation=FALSE,
+                        ...) {
 
   # use data.frame methods only, no tibbles etc.
   if (inherits(data, "data.frame")) {
@@ -47,16 +49,6 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
 
   if (inherits(data, "mids")) {
 
-    # get event specific times
-    if (is.null(times)) {
-      times <- sort(unique(data$data[, ev_time][data$data[, event]>=1]))
-
-      # add zero if not already in there
-      if (!0 %in% times) {
-        times <- c(0, times)
-      }
-    }
-
     # levels of the group variable
     if (is.numeric(data$data[, variable])) {
       levs <- unique(data$data[, variable])
@@ -66,6 +58,16 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
 
     # transform to long format
     mids <- mice::complete(data, action="long", include=FALSE)
+
+    # get event specific times
+    if (is.null(times)) {
+      times <- sort(unique(mids[, ev_time][mids[, event]>=1]))
+
+      # add zero if not already in there
+      if (!0 %in% times & method!="tmle") {
+        times <- c(0, times)
+      }
+    }
 
     # get additional arguments
     args <- list(...)
@@ -140,8 +142,8 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
       # use Rubins Rule
       plotdata <- dats %>%
         dplyr::group_by(., time, group) %>%
-        dplyr::summarise(cif=mean(cif),
-                         se=mean(se),
+        dplyr::summarise(cif=mean(cif, na.rm=mi_extrapolation),
+                         se=mean(se, na.rm=mi_extrapolation),
                          .groups="drop_last")
       plotdata <- as.data.frame(plotdata)
 
@@ -155,9 +157,30 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
     } else {
       plotdata <- dats %>%
         dplyr::group_by(., time, group) %>%
-        dplyr::summarise(cif=mean(cif),
+        dplyr::summarise(cif=mean(cif, na.rm=mi_extrapolation),
                          .groups="drop_last")
       plotdata <- as.data.frame(plotdata)
+    }
+
+    # if estimated CIFs beyond the maximum observed survival time
+    # exist, remove them if specified
+    if (!mi_extrapolation) {
+      max_t_group <- max_observed_time(mids=data, variable=variable,
+                                       ev_time=ev_time, event=event,
+                                       cause=cause, levs=levs,
+                                       method=method, type="cif")
+      plotdata <- merge(plotdata, max_t_group, by="group", all.x=TRUE)
+      plotdata <- plotdata[plotdata$time <= plotdata$max_t,]
+      plotdata$max_t <- NULL
+      plotdata <- plotdata[order(plotdata$group, plotdata$time), ]
+    }
+
+    if (force_bounds) {
+      plotdata <- force_bounds_surv(plotdata)
+    }
+
+    if (iso_reg) {
+      plotdata <- iso_reg_surv(plotdata)
     }
 
     # output object
@@ -233,7 +256,7 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
       times <- sort(unique(data[, ev_time][data[, event]>=1]))
 
       # add zero if not already in there
-      if (!0 %in% times) {
+      if (!0 %in% times & method!="tmle") {
         times <- c(0, times)
       }
     }
@@ -321,6 +344,14 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
 
     # keep factor ordering the same
     plotdata$group <- factor(plotdata$group, levels=levs)
+
+    if (force_bounds) {
+      plotdata <- force_bounds_cif(plotdata)
+    }
+
+    if (iso_reg) {
+      plotdata <- iso_reg_cif(plotdata)
+    }
 
     out <- list(adjcif=plotdata,
                 data=data,
@@ -425,6 +456,8 @@ summary.adjustedcif <- function(object, ...) {
                           " Weighting: Pseudo-Values")
   } else if (object$method=="aalen_johansen") {
     method_name <- "Aalen-Johansen Estimator"
+  } else if (object$method=="tmle") {
+    method_name <- "Targeted Maximum Likelihood Estimator"
   }
 
   times_str <- ifelse(is.null(object$call$times), "Event-Specific Times",

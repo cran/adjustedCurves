@@ -66,6 +66,11 @@ test_that("summary.adjustedsurv, aiptw_pseudo", {
   expect_snapshot_output(summary(adj))
 })
 
+adj$method <- "tmle"
+test_that("summary.adjustedsurv, tmle", {
+  expect_snapshot_output(summary(adj))
+})
+
 adj$method <- "strat_amato"
 test_that("summary.adjustedsurv, strat_amato", {
   expect_snapshot_output(summary(adj))
@@ -78,6 +83,21 @@ test_that("summary.adjustedsurv, strat_nieto", {
 
 adj$method <- "strat_cupples"
 test_that("summary.adjustedsurv, strat_cupples", {
+  expect_snapshot_output(summary(adj))
+})
+
+adj$method <- "iv_2SRIF"
+test_that("summary.adjustedsurv, iv_2SRIF", {
+  expect_snapshot_output(summary(adj))
+})
+
+adj$method <- "prox_iptw"
+test_that("summary.adjustedsurv, prox_iptw", {
+  expect_snapshot_output(summary(adj))
+})
+
+adj$method <- "prox_aiptw"
+test_that("summary.adjustedsurv, prox_aiptw", {
   expect_snapshot_output(summary(adj))
 })
 

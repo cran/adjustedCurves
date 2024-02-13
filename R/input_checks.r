@@ -55,20 +55,21 @@ check_inputs_adjustedsurv <- function(data, variable, ev_time, event, method,
          " not a vector. See documentation.")
   } else if (length(clean_data) != 1) {
     stop("'clean_data' must be either TRUE or FALSE, not a vector.")
-  } else if (length(method) != 1) {
+  } else if (length(method) != 1 | !is.character(method)) {
     stop("'method' must be a single character string. Using multiple",
          " methods in one call is currently not supported.")
   # needed variables
   } else if (!is.character(variable) | !is.character(ev_time) |
-             !is.character(event) | !is.character(method)) {
-    stop("Arguments 'variable', 'ev_time', 'event' and 'method' must be ",
+             !is.character(event)) {
+    stop("Arguments 'variable', 'ev_time' and 'event' must be ",
          "character strings, specifying variables in 'data'.")
   # method
   } else if (!method %in% c("km", "iptw_km", "iptw_cox", "iptw_pseudo",
                             "direct", "direct_pseudo", "aiptw_pseudo",
                             "aiptw", "matching",
                             "emp_lik", "strat_cupples", "strat_amato",
-                            "strat_nieto")) {
+                            "strat_nieto", "tmle", "iv_2SRIF",
+                            "prox_iptw", "prox_aiptw")) {
     stop("Method '", method, "' is undefined. See documentation for ",
          "details on available methods.")
   # conf_int
@@ -114,7 +115,9 @@ check_inputs_adjustedsurv <- function(data, variable, ev_time, event, method,
     levs_len <- length(unique(data[, variable]))
     if (levs_len < 2) {
       stop("There have to be at least two groups in 'variable'.")
-    } else if (levs_len > 2 & method %in% c("matching", "emp_lik", "aiptw")) {
+    } else if (levs_len > 2 & method %in% c("matching", "emp_lik", "aiptw",
+                                            "tmle", "iv_2SRIF", "prox_iptw",
+                                            "prox_aiptw")) {
       stop("Categorical treatments are currently not supported for ",
            "method='", method, "'.")
     }
@@ -166,24 +169,6 @@ check_inputs_adjustedsurv <- function(data, variable, ev_time, event, method,
         !inherits(obj$censoring_model, "mira")) {
       stop("When using multiple imputation, mira objects need to be supplied",
            " to 'censoring_model' instead of single models. See documentation.")
-    }
-    # warn user when there are missing values in event variable
-    if (anyNA(as.data.frame(data$data)[, event])) {
-      warning("Using multiple imputation with missing values in 'event'",
-              " variable has not been tested yet. Use with caution.",
-              call.=FALSE)
-    }
-    # warn user when there are missing values in ev_time variable
-    if (anyNA(as.data.frame(data$data)[, ev_time])) {
-      warning("Using multiple imputation with missing values in 'ev_time'",
-              " variable has not been tested yet. Use with caution.",
-              call.=FALSE)
-    }
-    # warn user when there are missing values in group variable
-    if (anyNA(as.data.frame(data$data)[, variable])) {
-      warning("Using multiple imputation with missing values in 'variable'",
-              " has not been tested yet. Use with caution.",
-              call.=FALSE)
     }
   }
 
@@ -398,6 +383,47 @@ check_inputs_adjustedsurv <- function(data, variable, ev_time, event, method,
       stop("Weights supplied directly to the 'treatment_model' argument",
            " must be positive.")
     }
+  } else if (method=="iv_2SRIF") {
+    # need adjust_vars, instrument
+    if (!"adjust_vars" %in% names(obj)) {
+      stop("Argument 'adjust_vars' needs to be specified when using",
+           " method='", method, "'.")
+    } else if (!"instrument" %in% names(obj)) {
+      stop("Argument 'instrument' needs to be specified when using",
+           " method='", method, "'.")
+    }
+    # invalid adjust_vars, instrument
+    if (!is.null(obj$adjust_vars) && !is.character(obj$adjust_vars)) {
+      stop("'adjust_vars' needs to be a character vector specifying names",
+           " in 'data'.")
+    } else if (!(is.character(obj$instrument) && length(obj$instrument)==1)) {
+      stop("'instrument' needs to be a single character string.")
+    }
+
+    # adjust_vars, instrument not in data
+    if (!is.null(obj$adjust_vars) &&
+        !all(obj$adjust_vars %in% colnames(data))) {
+      stop("'adjust_vars' must specify valid column names in 'data'.")
+    } else if (!obj$instrument %in% colnames(data)) {
+      stop("'instrument' must be a valid column name in 'data'.")
+    }
+  } else if (method=="prox_iptw" | method=="prox_aiptw") {
+
+    # need adjust_vars, treatment_proxy, outcome_proxy
+    if (!"adjust_vars" %in% names(obj)) {
+      stop("Argument 'adjust_vars' needs to be specified when using",
+           " method='", method, "'.")
+    } else if (!"treatment_proxy" %in% names(obj)) {
+      stop("Argument 'treatment_proxy' needs to be specified when using",
+           " method='", method, "'.")
+    } else if (!"outcome_proxy" %in% names(obj)) {
+      stop("Argument 'outcome_proxy' needs to be specified when using",
+           " method='", method, "'.")
+    }
+
+    check_inputs_prox(data=data, adjust_vars=obj$adjust_vars,
+                      treatment_proxy=obj$treatment_proxy,
+                      outcome_proxy=obj$outcome_proxy)
   }
 
   # bootstrapping
@@ -412,6 +438,42 @@ check_inputs_adjustedsurv <- function(data, variable, ev_time, event, method,
     warning("Asymptotic or exact variance calculations are currently",
             " not available for method='", method, "'. Use bootstrap=TRUE",
             " to get bootstrap estimates.", call.=FALSE)
+  }
+}
+
+## checking inputs when using method="prox_iptw" or method="prox_aiptw"
+check_inputs_prox <- function(data, adjust_vars, treatment_proxy,
+                              outcome_proxy) {
+
+  # general type / length checks
+  if (!(length(adjust_vars) >= 1 && is.character(adjust_vars))) {
+    stop("'adjust_vars' needs to be a character vector with at least one",
+         " entry.")
+  } else if (!(length(treatment_proxy)==1 && is.character(treatment_proxy))) {
+    stop("'treatment_proxy' needs to be a single character string.")
+  } else if (!(length(outcome_proxy)==1 && is.character(outcome_proxy))) {
+    stop("'outcome_proxy' needs to be a single character string.")
+  }
+
+  # variables in data
+  if (!all(adjust_vars %in% colnames(data))) {
+    stop("All variables named in 'adjust_vars' need to be valid columns in",
+         " 'data'. The following variables were not found in data: ",
+         paste0(adjust_vars[!adjust_vars %in% colnames(data)],
+                collapse=", "))
+  } else if (!treatment_proxy %in% colnames(data)) {
+    stop("The variable named as 'treatment_proxy' was not found in 'data'.")
+  } else if (!outcome_proxy %in% colnames(data)) {
+    stop("The variable named as 'outcome_proxy' was not found in 'data'.")
+  }
+
+  # variables of correct type
+  if (!is.numeric(data[, treatment_proxy])) {
+    stop("The 'treatment_proxy' must be numeric, not ",
+         class(data[, treatment_proxy]))
+  } else if (!is.numeric(data[, outcome_proxy])) {
+    stop("The 'outcome_proxy' must be numeric, not ",
+         class(data[, outcome_proxy]))
   }
 }
 
@@ -497,17 +559,18 @@ check_inputs_sim_fun <- function(n, lcovars, outcome_betas, surv_dist,
 }
 
 ## for adjusted_rmst function
-check_inputs_adj_rmst <- function(adjsurv, from, to, conf_int) {
+check_inputs_adj_rmst <- function(adjsurv, from, to, conf_int, difference,
+                                  ratio) {
 
   if ((!is.numeric(from) | !is.numeric(to)) &
-      length(from)==1 & length(to)==1) {
+      length(from)==1 & length(to)>=1) {
     stop("'from' and 'to' must be numbers (one for each argument).")
-  } else if (!(from >= 0 & to >= 0)) {
+  } else if (!(from >= 0 & all(to >= 0))) {
     stop("'from' and 'to' must be >= 0.")
   } else if (!inherits(adjsurv, "adjustedsurv")) {
     stop("'adjsurv' must be an 'adjustedsurv' object created using ",
          "the 'adjustedsurv()' function.")
-  } else if (from >= to) {
+  } else if (any(from >= to)) {
     stop("'from' must be smaller than 'to'.")
   } else if (!(is.logical(conf_int) & length(conf_int)==1)) {
     stop("'conf_int' must be either TRUE or FALSE.")
@@ -518,7 +581,7 @@ check_inputs_adj_rmst <- function(adjsurv, from, to, conf_int) {
             call.=FALSE)
   }
 
-  if (to > max(adjsurv$adjsurv$time, na.rm=TRUE)) {
+  if (any(to > max(adjsurv$adjsurv$time, na.rm=TRUE))) {
     stop("'to' cannot be greater than the latest observed time.")
   }
 
@@ -527,21 +590,27 @@ check_inputs_adj_rmst <- function(adjsurv, from, to, conf_int) {
             " estimates. Consider using a finer times grid in",
             " 'adjustedsurv'.", call.=FALSE)
   }
+
+  if (difference & ratio) {
+    warning("Cannot calculate the difference and the ratio simultaneously.",
+            " Only the difference will be displayed. To obtain the ratio",
+            " instead, set difference=FALSE.")
+  }
 }
 
 ## for adjusted_rmtl function
-check_inputs_adj_rmtl <- function(adj, from, to, conf_int) {
+check_inputs_adj_rmtl <- function(adj, from, to, conf_int, difference, ratio) {
 
   if ((!is.numeric(from) | !is.numeric(to)) &
-      length(from)==1 & length(to)==1) {
+       length(from)==1 & length(to)>=1) {
     stop("'from' and 'to' must be numbers (one for each argument).")
-  } else if (!(from >= 0 & to >= 0)) {
+  } else if (!(from >= 0 & all(to >= 0))) {
     stop("'from' and 'to' must be >= 0.")
   } else if (!inherits(adj, c("adjustedsurv", "adjustedcif"))) {
     stop("'adj' must be an 'adjustedsurv' object created using",
          " the 'adjustedsurv()' function or an 'adjustedcif' object",
          " created using the 'adjustedcif()' function.")
-  } else if (from >= to) {
+  } else if (any(from >= to)) {
     stop("'from' must be smaller than 'to'.")
   } else if (!(is.logical(conf_int) & length(conf_int)==1)) {
     stop("'conf_int' must be either TRUE or FALSE.")
@@ -560,7 +629,7 @@ check_inputs_adj_rmtl <- function(adj, from, to, conf_int) {
     n_t <- length(unique((adj$adjcif$time)))
   }
 
-  if (to > max_t) {
+  if (any(to > max_t)) {
     stop("'to' cannot be greater than the latest observed time.")
   }
 
@@ -568,6 +637,12 @@ check_inputs_adj_rmtl <- function(adj, from, to, conf_int) {
     warning("Using only a few points in time might lead to biased",
             " estimates. Consider using a finer times grid in",
             " 'adjustedsurv'/'adjustedcif'.", call.=FALSE)
+  }
+
+  if (difference & ratio) {
+    warning("Cannot calculate the difference and the ratio simultaneously.",
+            " Only the difference will be displayed. To obtain the ratio",
+            " instead, set difference=FALSE.")
   }
 }
 
@@ -669,7 +744,7 @@ check_inputs_adjustedcif <- function(data, variable, ev_time, event, method,
          "character strings, specifying variables in 'data'.")
   } else if (!method %in% c("aalen_johansen", "iptw", "iptw_pseudo", "direct",
                             "direct_pseudo", "aiptw_pseudo",
-                            "aiptw", "matching")) {
+                            "aiptw", "matching", "tmle")) {
     stop("Method '", method, "' is undefined. See documentation for ",
          "details on available methods.")
   # conf_int
@@ -771,24 +846,6 @@ check_inputs_adjustedcif <- function(data, variable, ev_time, event, method,
         !inherits(obj$censoring_model, "mira")) {
       stop("When using multiple imputation, mira objects need to be supplied",
            " to 'censoring_model' instead of single models. See documentation.")
-    }
-    # warn user when there are missing values in event variable
-    if (anyNA(as.data.frame(data$data)[, event])) {
-      warning("Using multiple imputation with missing values in 'event'",
-              " variable has not been tested yet. Use with caution.",
-              call.=FALSE)
-    }
-    # warn user when there are missing values in ev_time variable
-    if (anyNA(as.data.frame(data$data)[, ev_time])) {
-      warning("Using multiple imputation with missing values in 'ev_time'",
-              " variable has not been tested yet. Use with caution.",
-              call.=FALSE)
-    }
-    # warn user when there are missing values in group variable
-    if (anyNA(as.data.frame(data$data)[, variable])) {
-      warning("Using multiple imputation with missing values in 'variable'",
-              " has not been tested yet. Use with caution.",
-              call.=FALSE)
     }
   }
 
