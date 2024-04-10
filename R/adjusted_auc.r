@@ -20,14 +20,8 @@ area_under_curve <- function(adj, from, to, conf_int, conf_level,
   # silence checks
   . <- se <- group <- NULL
 
-  if (inherits(adj, "adjustedsurv")) {
-    levs <- levels(adj$adjsurv$group)
-  } else {
-    levs <- levels(adj$adjcif$group)
-  }
-
+  levs <- levels(adj$adj$group)
   mode <- ifelse(inherits(adj, "adjustedsurv"), "surv", "cif")
-  boot_str <- paste0("boot_adj", mode)
 
   ## Using multiple imputation
   if (!is.null(adj$mids_analyses)) {
@@ -74,7 +68,7 @@ area_under_curve <- function(adj, from, to, conf_int, conf_level,
   ## single analysis
   } else {
 
-    if (conf_int & !is.null(adj[boot_str])) {
+    if (conf_int & !is.null(adj$boot_adj)) {
 
       n_boot <- max(adj$boot_data$boot)
       booted_aucs <- vector(mode="list", length=n_boot)
@@ -85,11 +79,10 @@ area_under_curve <- function(adj, from, to, conf_int, conf_level,
         boot_dat <- adj$boot_data[adj$boot_data$boot==i, ]
 
         # create fake adjustedsurv object
+        fake_object <- list(adj=boot_dat)
         if (mode=="surv") {
-          fake_object <- list(adjsurv=boot_dat)
           class(fake_object) <- "adjustedsurv"
         } else {
-          fake_object <- list(adjcif=boot_dat)
           class(fake_object) <- "adjustedcif"
         }
 
@@ -107,11 +100,7 @@ area_under_curve <- function(adj, from, to, conf_int, conf_level,
     out <- vector(mode="list", length=length(levs))
     for (i in seq_len(length(levs))) {
 
-      if (mode=="surv") {
-        surv_dat <- adj$adjsurv[adj$adjsurv$group==levs[i], ]
-      } else {
-        surv_dat <- adj$adjcif[adj$adjcif$group==levs[i], ]
-      }
+      surv_dat <- adj$adj[adj$adj$group==levs[i], ]
       surv_dat$group <- NULL
       surv_dat$se <- NULL
       surv_dat$ci_lower <- NULL
@@ -126,7 +115,7 @@ area_under_curve <- function(adj, from, to, conf_int, conf_level,
     out$group <- factor(out$group, levels=levs)
     out <- out[order(out$to, out$group),]
 
-    if (conf_int & !is.null(adj[boot_str])) {
+    if (conf_int & !is.null(adj$boot_adj)) {
 
       out_boot <- booted_aucs %>%
         dplyr::group_by(., to, group) %>%
@@ -210,23 +199,34 @@ auc_ratio <- function(data, group_1, group_2, conf_int, conf_level) {
 adjusted_rmst <- function(adjsurv, to, from=0, conf_int=FALSE,
                           conf_level=0.95, interpolation="steps",
                           difference=FALSE, ratio=FALSE,
-                          group_1=NULL, group_2=NULL) {
+                          contrast="none", group_1=NULL, group_2=NULL) {
 
   check_inputs_adj_rmst(adjsurv=adjsurv, from=from, to=to, conf_int=conf_int,
-                        difference=difference, ratio=ratio)
+                        contrast=contrast)
+
+  # temporary deprecation error
+  if (difference) {
+    stop("The argument 'difference' has been deprecated",
+         " as of version 0.11.1. Instead of 'difference=TRUE' please use",
+         " contrast='diff'.")
+  } else if (ratio) {
+    stop("The argument 'ratio' has been deprecated",
+         " as of version 0.11.1. Instead of 'ratio=TRUE' please use",
+         " contrast='ratio'.")
+  }
 
   # set to FALSE if it can't be done
-  if (conf_int & is.null(adjsurv$boot_adjsurv)) {
+  if (conf_int & is.null(adjsurv$boot_adj)) {
     conf_int <- FALSE
   }
 
   out <- area_under_curve(adj=adjsurv, to=to, from=from,
                           conf_int=conf_int, conf_level=conf_level,
                           interpolation=interpolation)
-  if (difference) {
+  if (contrast=="diff") {
     out <- auc_difference(data=out, group_1=group_1, group_2=group_2,
                           conf_int=conf_int, conf_level=conf_level)
-  } else if (ratio) {
+  } else if (contrast=="ratio") {
     out <- auc_ratio(data=out, group_1=group_1, group_2=group_2,
                      conf_int=conf_int, conf_level=conf_level)
   } else if (conf_int) {
@@ -245,13 +245,24 @@ adjusted_rmst <- function(adjsurv, to, from=0, conf_int=FALSE,
 adjusted_rmtl <- function(adj, to, from=0, conf_int=FALSE,
                           conf_level=0.95, interpolation="steps",
                           difference=FALSE, ratio=FALSE,
-                          group_1=NULL, group_2=NULL) {
+                          contrast="none", group_1=NULL, group_2=NULL) {
 
   check_inputs_adj_rmtl(adj=adj, from=from, to=to, conf_int=conf_int,
-                        difference=difference, ratio=ratio)
+                        contrast=contrast)
+
+  # temporary deprecation error
+  if (difference) {
+    stop("The argument 'difference' has been deprecated",
+         " as of version 0.11.1. Instead of 'difference=TRUE' please use",
+         " contrast='diff'.")
+  } else if (ratio) {
+    stop("The argument 'ratio' has been deprecated",
+         " as of version 0.11.1. Instead of 'ratio=TRUE' please use",
+         " contrast='ratio'.")
+  }
 
   # set to FALSE if it can't be done
-  if (conf_int & is.null(adj$boot_adjsurv) & is.null(adj$boot_adjcif)) {
+  if (conf_int & is.null(adj$boot_adj)) {
     conf_int <- FALSE
   }
 
@@ -277,10 +288,10 @@ adjusted_rmtl <- function(adj, to, from=0, conf_int=FALSE,
     }
   }
 
-  if (difference) {
+  if (contrast=="diff") {
     out <- auc_difference(data=out, group_1=group_1, group_2=group_2,
                           conf_int=conf_int, conf_level=conf_level)
-  } else if (ratio) {
+  } else if (contrast=="ratio") {
     out <- auc_ratio(data=out, group_1=group_1, group_2=group_2,
                      conf_int=conf_int, conf_level=conf_level)
   } else if (conf_int) {

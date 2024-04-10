@@ -2,11 +2,9 @@
 knitr::opts_chunk$set(echo=TRUE)
 
 ## ----echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE----------------------
-#  library(devtools)
-#  devtools::install_github("RobinDenz1/adjustedCurves")
+#  install.packages("adjustedCurves")
 
 ## ----echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE----------------------
-#  library(remotes)
 #  remotes::install_github("RobinDenz1/adjustedCurves")
 
 ## ----echo=TRUE, message=FALSE, warning=FALSE----------------------------------
@@ -42,22 +40,13 @@ adjsurv <- adjustedsurv(data=data_1,
                         conf_int=TRUE)
 
 ## ----echo=TRUE----------------------------------------------------------------
-head(adjsurv$adjsurv)
+head(adjsurv$adj)
 
 ## ----echo=TRUE, fig.show=TRUE, fig.width=7, fig.height=5----------------------
 plot(adjsurv)
 
 ## ----echo=TRUE, fig.show=TRUE, fig.width=7, fig.height=5----------------------
 plot(adjsurv, conf_int=TRUE)
-
-## ----echo=TRUE, fig.show=TRUE, fig.width=7, fig.height=5----------------------
-plot(adjsurv, linetype=TRUE, color=FALSE)
-
-## ----echo=TRUE, fig.show=TRUE, fig.width=7, fig.height=5----------------------
-plot(adjsurv, color=TRUE, censoring_ind="lines")
-
-## ----echo=TRUE, fig.show=TRUE, fig.width=7, fig.height=5----------------------
-plot(adjsurv, color=TRUE, median_surv_lines=TRUE)
 
 ## ----echo=TRUE----------------------------------------------------------------
 treatment_model <- glm(group ~ x1 + x2 + x3 + x4 + x5 + x6,
@@ -72,7 +61,7 @@ adjsurv <- adjustedsurv(data=data_1,
                         conf_int=TRUE)
 
 ## ----echo=TRUE, fig.show=TRUE, fig.width=7, fig.height=5----------------------
-plot(adjsurv)
+plot(adjsurv, conf_int=TRUE)
 
 ## ----echo=TRUE, fig.width=7, fig.height=5-------------------------------------
 adjsurv <- adjustedsurv(data=data_1,
@@ -164,36 +153,6 @@ adjsurv <- adjustedsurv(data=data_1,
                         event="event",
                         method="iptw_km",
                         treatment_model=treatment_model,
-                        conf_int=TRUE,
-                        bootstrap=TRUE,
-                        n_boot=50)
+                        conf_int=TRUE)
 plot(adjsurv, conf_int=TRUE)
-
-## ----echo=TRUE----------------------------------------------------------------
-adjusted_curve_diff(adjsurv, times=0.4, group_1="0", group_2="1", conf_int=TRUE)
-
-## ----echo=TRUE, fig.width=7, fig.height=5-------------------------------------
-plot_curve_diff(adjsurv, group_1="0", group_2="1", conf_int=TRUE, color="blue")
-
-## ----echo=TRUE----------------------------------------------------------------
-adjusted_surv_quantile(adjsurv, p=0.5, conf_int=TRUE)
-
-## ----echo=TRUE----------------------------------------------------------------
-adjusted_rmst(adjsurv, to=0.4)
-
-## ----echo=TRUE, message=FALSE, warning=FALSE----------------------------------
-adjusted_rmst(adjsurv, to=0.4, conf_int=TRUE)
-
-## ----echo=TRUE----------------------------------------------------------------
-adjusted_rmst(adjsurv, to=0.4, conf_int=TRUE, difference=TRUE,
-              group_1="0", group_2="1")
-
-## ----echo=TRUE, fig.width=7, fig.height=5-------------------------------------
-plot_rmst_curve(adjsurv)
-
-## ----echo=TRUE----------------------------------------------------------------
-adjusted_rmtl(adjcif, to=0.4, conf_int=FALSE)
-
-## ----echo=TRUE, fig.width=7, fig.height=5-------------------------------------
-plot_rmtl_curve(adjcif)
 

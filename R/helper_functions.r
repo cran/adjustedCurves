@@ -15,7 +15,7 @@
 
 ## estimate iptw weights
 get_iptw_weights <- function(data, treatment_model, weight_method,
-                             variable, stabilize=TRUE, trim, ...) {
+                             variable, stabilize=TRUE, trim, trim_q, ...) {
   levs <- levels(data[, variable])
 
   # using WeightIt
@@ -49,6 +49,7 @@ get_iptw_weights <- function(data, treatment_model, weight_method,
   }
 
   weights <- trim_weights(weights=weights, trim=trim)
+  weights <- trim_weights_quantiles(weights=weights, trim_q=trim_q)
 
   if (stabilize) {
     weights <- stabilize_weights(weights, data, variable, levs)
@@ -64,6 +65,29 @@ trim_weights <- function(weights, trim) {
     return(weights)
   } else {
     weights[weights > trim] <- trim
+    return(weights)
+  }
+}
+
+## trim weights based on defined quantiles
+trim_weights_quantiles <- function(weights, trim_q) {
+
+  # check inputs
+  if (!((length(trim_q)==1 && is.logical(trim_q) &&
+         !trim_q) | (length(trim_q)==2 &&
+         is.numeric(trim_q) && all(trim_q < 1)
+         && all(trim_q > 0)))) {
+    stop("'trim_quantile' must be either FALSE or a numeric vector of length 2",
+         " containing the lower and upper quantile to be trimmed.")
+  }
+
+  if (length(trim_q)==1) {
+    return(weights)
+  } else {
+    q_low <- stats::quantile(weights, probs=min(trim_q))
+    q_high <- stats::quantile(weights, probs=max(trim_q))
+    weights[weights < q_low] <- q_low
+    weights[weights > q_high] <- q_high
     return(weights)
   }
 }
@@ -130,19 +154,13 @@ confint_surv <- function(surv, se, conf_level, conf_type="plain") {
 ## custom points in time are supplied
 specific_times <- function(plotdata, times, est="surv", interpolation="steps") {
 
-  if (interpolation=="steps") {
-    read_fun <- read_from_step_function
-  } else if (interpolation=="linear") {
-    read_fun <- read_from_linear_function
-  }
-
   levs <- unique(plotdata$group)
   new_plotdata <- vector(mode="list", length=length(levs))
   for (i in seq_len(length(levs))) {
 
-    new_est <- vapply(times, read_fun, est=est,
-                      data=plotdata[which(plotdata$group==levs[i]), ],
-                      FUN.VALUE=numeric(1))
+    new_est <- read_from_fun(x=times, est=est,
+                             data=plotdata[which(plotdata$group==levs[i]), ],
+                             interpolation=interpolation)
 
     if (est=="cif") {
       new_dat <- data.frame(time=times, cif=new_est, group=levs[i])
@@ -160,15 +178,14 @@ specific_times <- function(plotdata, times, est="surv", interpolation="steps") {
       #       to the respective specification, the standard error stays
       #       the same over the interpolation period and therefore always
       #       needs to be interpolated using the step function method
-      new_se <- vapply(times, read_from_step_function, est="se",
-                       data=plotdata[which(plotdata$group==levs[i]), ],
-                       FUN.VALUE=numeric(1))
-      new_ci_lower <- vapply(times, read_fun, est="ci_lower",
-                          data=plotdata[which(plotdata$group==levs[i]), ],
-                          FUN.VALUE=numeric(1))
-      new_ci_upper <- vapply(times, read_fun, est="ci_upper",
-                          data=plotdata[which(plotdata$group==levs[i]), ],
-                          FUN.VALUE=numeric(1))
+      new_se <- read_from_fun(x=times, interpolation="steps", est="se",
+                       data=plotdata[which(plotdata$group==levs[i]), ])
+      new_ci_lower <- read_from_fun(x=times, interpolation=interpolation,
+                                    est="ci_lower",
+                              data=plotdata[which(plotdata$group==levs[i]), ])
+      new_ci_upper <- read_from_fun(x=times, interpolation=interpolation,
+                                    est="ci_upper",
+                              data=plotdata[which(plotdata$group==levs[i]), ])
       # add to output in same order
       new_dat$se <- new_se
       new_dat$ci_lower <- new_ci_lower
@@ -177,9 +194,8 @@ specific_times <- function(plotdata, times, est="surv", interpolation="steps") {
 
     # same as standard error, stays the same
     if ("p_value" %in% colnames(plotdata)) {
-      new_p <- vapply(times, read_from_step_function, est="p_value",
-                      data=plotdata[which(plotdata$group==levs[i]), ],
-                      FUN.VALUE=numeric(1))
+      new_p <- read_from_fun(x=times, interpolation="steps", est="p_value",
+                      data=plotdata[which(plotdata$group==levs[i]), ])
       new_dat$p_value <- new_p
     }
 
@@ -364,7 +380,7 @@ load_needed_packages <- function(method, kind, treatment_model,
 
     # concrete
     if (method=="tmle") {
-      requireNamespace("concrete")
+      #requireNamespace("concrete")
     }
 
     # data.table
@@ -412,7 +428,7 @@ load_needed_packages <- function(method, kind, treatment_model,
 
     # concrete
     if (method=="tmle") {
-      requireNamespace("concrete")
+      #requireNamespace("concrete")
     }
 
     # data.table
@@ -483,23 +499,29 @@ add_rows_with_zero <- function(plotdata, mode="surv") {
   return(plotdata)
 }
 
-## perform isotonic regression on survival estimates
-iso_reg_surv <- function(plotdata) {
+## perform isotonic regression on survival / CIF estimates
+iso_reg_est <- function(plotdata) {
 
-  if (anyNA(plotdata$surv)) {
+  mode <- ifelse("surv" %in% colnames(plotdata), "surv", "cif")
+
+  if (anyNA(plotdata[, mode])) {
     stop("Isotonic Regression cannot be used when there are missing",
-         " values in the final survival estimates.")
+         " values in the final estimates.")
   }
 
   for (lev in levels(plotdata$group)) {
     temp <- plotdata[plotdata$group==lev, ]
-    # to surv estimates
-    new <- rev(stats::isoreg(rev(temp$surv))$yf)
-    plotdata$surv[plotdata$group==lev] <- new
+
+    if (mode=="surv") {
+      new <- rev(stats::isoreg(rev(temp$surv))$yf)
+    } else {
+      new <- stats::isoreg(temp$cif)$yf
+    }
+    plotdata[, mode][plotdata$group==lev] <- new
 
     # shift confidence intervals accordingly
     if ("ci_lower" %in% colnames(temp)) {
-      diff <- temp$surv - new
+      diff <- temp[, mode] - new
 
       plotdata$ci_lower[plotdata$group==lev] <- temp$ci_lower - diff
       plotdata$ci_upper[plotdata$group==lev] <- temp$ci_upper - diff
@@ -510,46 +532,20 @@ iso_reg_surv <- function(plotdata) {
 }
 
 ## force probabilities to be in the 0/1 range
-force_bounds_surv <- function(plotdata) {
-  plotdata <- within(plotdata, {
-    surv <- ifelse(surv < 0, 0, surv)
-    surv <- ifelse(surv > 1, 1, surv)
-  })
+force_bounds_est <- function(plotdata) {
+  mode <- ifelse("surv" %in% colnames(plotdata), "surv", "cif")
 
-  return(plotdata)
-}
-
-## isotonic regression for CIF estimates
-iso_reg_cif <- function(plotdata) {
-
-  if (anyNA(plotdata$cif)) {
-    stop("Isotonic Regression cannot be used when there are missing",
-         " values in the final CIF estimates.")
+  if (mode=="surv") {
+    plotdata <- within(plotdata, {
+      surv <- ifelse(surv < 0, 0, surv)
+      surv <- ifelse(surv > 1, 1, surv)
+    })
+  } else {
+    plotdata <- within(plotdata, {
+      cif <- ifelse(cif < 0, 0, cif)
+      cif <- ifelse(cif > 1, 1, cif)
+    })
   }
-
-  for (lev in levels(plotdata$group)) {
-    temp <- plotdata[plotdata$group==lev, ]
-
-    new <- stats::isoreg(temp$cif)$yf
-    plotdata$cif[plotdata$group==lev] <- new
-
-    if ("ci_lower" %in% colnames(temp)) {
-      diff <- temp$cif - new
-
-      plotdata$ci_lower[plotdata$group==lev] <- temp$ci_lower - diff
-      plotdata$ci_upper[plotdata$group==lev] <- temp$ci_upper - diff
-    }
-  }
-
-  return(plotdata)
-}
-
-## forcing bounds for CIF estimates
-force_bounds_cif <- function(plotdata) {
-  plotdata <- within(plotdata, {
-    cif <- ifelse(cif < 0, 0, cif)
-    cif <- ifelse(cif > 1, 1, cif)
-  })
 
   return(plotdata)
 }

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Robin Denz" />
+
+
+<title>Frequently Asked Questions about the adjustedCurves Package</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Frequently Asked Questions about the
+adjustedCurves Package</h1>
+<h4 class="author">Robin Denz</h4>
+
+
+
+<p>This vignette answers some of the most frequently asked questions
+about the package.</p>
+<div id="how-do-i-add-a-table-with-the-number-at-risk-below-the-plot" class="section level2">
+<h2>How do I add a table with the number at risk below the plot?</h2>
+<p>Since version 0.11.1, it is possible to use the
+<code>risk_table</code> argument of the <code>plot.adjustedsurv()</code>
+function to directly add such tables to the plot. It is, however,
+recommended to read the associated point in the documentation page first
+(<code>?plot.adjustedsurv</code>) first to find out whether adding such
+tables is a good idea or not.</p>
+</div>
+<div id="how-do-i-get-a-p-value" class="section level2">
+<h2>How do I get a p-value?</h2>
+<p>There is no easy answer to this question, because it is inherently
+vague. What should the p-value be for? Which hypothesis should be tested
+using it? The package offers multiple different ways to compare adjusted
+survival curves and CIFs, as described in the associated vignette
+(<code>vignette(topic=&quot;comparing_groups&quot;, package=&quot;adjustedCurves&quot;)</code>)
+and the documentation pages. Some of these also return p-values.</p>
+</div>
+<div id="does-this-package-support-time-varying-covariates" class="section level2">
+<h2>Does this package support time-varying covariates?</h2>
+<p>No, time-varying covariates are currently not supported. There are
+two main reasons for this: (1) with time-varying covariates, it is
+unclear what the target estimand should be (see for example Hernán &amp;
+Robins 2020) and (2) estimating one of the possible target estimands is,
+depending on the causal assumptions, a very complicated endeavor which
+cannot be easily automated. It is doubtful that this package will ever
+contain such methods, but we won’t rule it out completely.</p>
+</div>
+<div id="which-method-should-i-use" class="section level2">
+<h2>Which method should I use?</h2>
+<p>Unfortunately there is no easy answer for this question either. It
+depends both on goals of the analysis, the causal assumptions and the
+observed data. Some theoretical guidance and comparison of most of the
+implemented methods is given in the associated simulation study (see
+Denz et al. 2023). More practical guidance (e.g. which method can I use
+to get adjusted survival curves if there are more than two groups of
+interest etc.) can be found in the methods vignette
+(<code>vignette(topic=&quot;method_overview&quot;, package=&quot;adjustedCurves&quot;)</code>).</p>
+</div>
+<div id="how-can-i-interpret-the-results" class="section level2">
+<h2>How can I interpret the results?</h2>
+<p>The interpretation of the results heavily depend on the causal
+assumptions made by the user. Resulting survival curves or CIFs cannot
+generally be interpreted as counterfactual survival curves. This
+interpretation is only possible under the causal identifiability
+assumptions and method-specific assumptions, as described in Denz et
+al. (2023). If these assumptions cannot be made, the results should only
+be interpreted as “marginal survival curves / CIFs after adjusting for
+confounders X”.</p>
+</div>
+<div id="is-it-possible-to-obtain-adjusted-survival-curves-for-data-with-competing-events" class="section level2">
+<h2>Is it possible to obtain adjusted survival curves for data with
+competing events?</h2>
+<p>No, this is generally impossible. Users may, however, use the
+<code>adjustedcif()</code> function to estimate confounder-adjusted
+cause-specific cumulative incidence functions instead.</p>
+</div>
+<div id="can-i-use-this-package-if-the-variable-i-am-interested-in-is-continuous" class="section level2">
+<h2>Can I use this package if the variable I am interested in is
+continuous?</h2>
+<p>It is possible, but not recommended. To get adjusted survival curves
+or CIFs for a continuous variable of interest with this package, users
+need to categorize the variable before doing any kind of analysis. This
+leads to a loss of information, which may lead to biased estimates or a
+loss of statistical power. To circumvent this issue, we developed
+another R-package called <code>contsurvplot</code> which directly
+implements plotting methods for continuous variables, as described in
+Denz &amp; Timmesfeld (2023).</p>
+</div>
+<div id="does-this-package-offer-an-adjusted-log-rank-test" class="section level2">
+<h2>Does this package offer an adjusted log-rank test?</h2>
+<p>No, it currently doesn’t. We only know of one type of log-rank test
+that allows confounder-adjustment, which is the inverse probability of
+treatment weighted log-rank test described by Xie et al. (2005). Since
+this only works for one type of method, it is not implemented here. It
+is, however, implemented in the <code>RISCA</code> package. Other ways
+to compare survival curves or CIFs using the <code>adjustedCurves</code>
+package are described in the documentation and the associated vignette
+(<code>vignette(topic=&quot;comparing_groups&quot;, package=&quot;adjustedCurves&quot;)</code>).</p>
+</div>
+<div id="how-do-i-deal-with-missing-values" class="section level2">
+<h2>How do I deal with missing values?</h2>
+<p>The package offers direct support for multiple imputation as
+performed using the <code>mice</code> package. How exactly these
+imputations should be performed is beyond the scope of this package. We
+recommend seeking information on the <code>mice</code> package website
+or the associated book.</p>
+</div>
+<div id="i-have-fit-a-coxph-model-with-startstop-type-data.-can-i-use-this-model-to-obtain-adjusted-survival-curves" class="section level2">
+<h2>I have fit a <code>coxph</code> model with start/stop type data. Can
+I use this model to obtain adjusted survival curves?</h2>
+<p>This is currently not supported. More information may be found in the
+question about time-varying covariates.</p>
+</div>
+<div id="can-interactions-be-included-when-estimating-adjusted-survival-curves-or-cifs" class="section level2">
+<h2>Can interactions be included when estimating adjusted survival
+curves or CIFs?</h2>
+<p>Yes, that is possible. For example, if the user wants to use
+<code>method=&quot;direct&quot;</code> with a <code>coxph</code> model as outcome
+model, interactions can be included using the standard syntax in the
+<code>coxph</code> call if they are not the main variable of interest.
+If, on the other hand, the main thing of interest <em>is</em> the
+interaction (e.g. the user wants to plot survival curves / CIFs for all
+possible combinations of two categorical variables) a slightly different
+procedure is needed. Users then need to construct a new variable that
+directly combines the two categorical variables (for example using the
+<code>interaction()</code> function) and use this new variable in both
+the <code>adjustedsurv()</code> / <code>adjustedcif()</code> call and
+the <code>coxph</code> model.</p>
+</div>
+<div id="how-do-i-cite-this-package" class="section level2">
+<h2>How do I cite this package?</h2>
+<p>We recommend citing the relevant method-specific paper and the paper
+associated with this package when using it in a scientific publication.
+For example, when using <code>method=&quot;iptw_km&quot;</code> in the
+<code>adjustedsurv()</code> function, we recommend citing both Xie et
+al. (2005) and the article associated with the package (Denz et
+al. 2023).</p>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<p>Robin Denz, Renate Klaaßen-Mielke, and Nina Timmesfeld (2023). “A
+Comparison of Different Methods to Adjust Survival Curves for
+Confounders”. In: Statistics in Medicine 42.10, pp. 1461-1479.</p>
+<p>Robin Denz, Nina Timmesfeld (2023). “Visualizing the (Causal) Effect
+of a Continuous Variable on a Time-To-Event Outcome”. In: Epidemiology
+34.5, pp. 652-660.</p>
+<p>Jun Xie and Chaofeng Liu (2005). “Adjusted Kaplan-Meier Estimator and
+Log- Rank Test with Inverse Probability of Treatment Weighting for
+Survival Data”. In: Statistics in Medicine 24, pp. 3089-3110.</p>
+<p>Miguel Hernán and James Robins (2020). Causal Inference: What If.
+Boca Raton: Chapman &amp; Hall/CRC</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

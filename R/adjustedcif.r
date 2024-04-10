@@ -125,12 +125,12 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
     for (i in seq_len(length(out))) {
 
       # direct estimate
-      dat <- out[[i]]$adjcif
+      dat <- out[[i]]$adj
       dat$.imp <- i
       dats[[i]] <- dat
 
       # bootstrap estimate
-      boot_dat <- out[[i]]$boot_adjcif
+      boot_dat <- out[[i]]$boot_adj
       boot_dat$.imp <- i
       boot_dats[[i]] <- boot_dat
 
@@ -176,16 +176,16 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
     }
 
     if (force_bounds) {
-      plotdata <- force_bounds_surv(plotdata)
+      plotdata <- force_bounds_est(plotdata)
     }
 
     if (iso_reg) {
-      plotdata <- iso_reg_surv(plotdata)
+      plotdata <- iso_reg_est(plotdata)
     }
 
     # output object
     out_obj <- list(mids_analyses=out,
-                    adjcif=plotdata,
+                    adj=plotdata,
                     data=data$data,
                     method=method,
                     categorical=ifelse(length(levs)>2, TRUE, FALSE),
@@ -208,7 +208,7 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
       plotdata_boot$ci_lower <- surv_ci$left
       plotdata_boot$ci_upper <- surv_ci$right
 
-      out_obj$boot_adjcif <- plotdata_boot
+      out_obj$boot_adj <- plotdata_boot
 
     }
 
@@ -285,7 +285,7 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
         cl <- parallel::makeCluster(n_cores, outfile="")
         doParallel::registerDoParallel(cl)
         pkgs <- (.packages())
-        export_objs <- c("get_iptw_weights", "read_from_step_function",
+        export_objs <- c("get_iptw_weights", "read_from_fun",
                          "adjustedcif_boot", "trim_weights",
                          "geese_predictions", "load_needed_packages",
                          "specific_times", "cif_g_comp")
@@ -346,14 +346,14 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
     plotdata$group <- factor(plotdata$group, levels=levs)
 
     if (force_bounds) {
-      plotdata <- force_bounds_cif(plotdata)
+      plotdata <- force_bounds_est(plotdata)
     }
 
     if (iso_reg) {
-      plotdata <- iso_reg_cif(plotdata)
+      plotdata <- iso_reg_est(plotdata)
     }
 
-    out <- list(adjcif=plotdata,
+    out <- list(adj=plotdata,
                 data=data,
                 method=method,
                 categorical=ifelse(length(levs)>2, TRUE, FALSE),
@@ -375,7 +375,7 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
 
       # put together
       boot_stats$cif <- plotdata_temp$cif
-      out$boot_adjcif <- boot_stats
+      out$boot_adj <- boot_stats
     }
 
     # add method-specific objects to output
@@ -428,10 +428,10 @@ adjustedcif_boot <- function(data, variable, ev_time, event, cause, method,
   args <- c(args, pass_args)
 
   method_results <- R.utils::doCall(cif_fun, args=args)
-  adjcif_boot <- method_results$plotdata
-  adjcif_boot$boot <- i
+  adj_boot <- method_results$plotdata
+  adj_boot$boot <- i
 
-  return(adjcif_boot)
+  return(adj_boot)
 
 }
 
@@ -492,9 +492,9 @@ summary.adjustedcif <- function(object, ...) {
   }
 
   if (is.null(object$mids_analyses)) {
-    cat("   - Using a single dataset")
+    cat("   - Using a single dataset\n")
   } else {
-    cat("   - Using multiply imputed dataset")
+    cat("   - Using multiply imputed dataset\n")
   }
 }
 

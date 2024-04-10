@@ -83,7 +83,6 @@ The primary purpose of the \code{adjustedsurv} function is to provide a convenie
   \item{"\link[=surv_emp_lik]{emp_lik}": An Empirical Likelihood based estimator.}
   \item{"\link[=surv_aiptw]{aiptw}": An Augmented Inverse Probability of Treatment Weighting estimator.}
   \item{"\link[=surv_aiptw_pseudo]{aiptw_pseudo}": An Augmented Inverse Probability of Treatment Weighting estimator using Pseudo-Values.}
-  \item{"\link[=surv_tmle]{tmle}": Targeted Maximum Likelihood Estimation for continuously distributed time-to-event data.}
   \item{"\link[=surv_strat_amato]{strat_amato}": A method based on stratification and weighting by Amato (1988).}
   \item{"\link[=surv_strat_nieto]{strat_nieto}": A method based on stratification and weighting by Gregory (1988) and Nieto & Coresh (1996).}
   \item{"\link[=surv_strat_cupples]{strat_cupples}": A method based on stratification and weighting by Cupples et al. (1995).}
@@ -121,7 +120,7 @@ A general plot of the estimated adjusted survival curves can be obtained using t
 \value{
 Returns an \code{adjustedsurv} object containing the following objects:
 
-\item{adjsurv}{A \code{data.frame} of estimated adjusted survival probabilities for some points in time for each level of \code{variable}. Depending on the arguments used also includes standard errors and confidence intervals.
+\item{adj}{A \code{data.frame} of estimated adjusted survival probabilities for some points in time for each level of \code{variable}. Depending on the arguments used also includes standard errors and confidence intervals.
 }
 \item{data}{The \code{data.frame} used in the original function call.
 }
@@ -138,7 +137,7 @@ When the argument \code{bootstrap} is set to \code{TRUE}, it additionally contai
 
 \item{boot_data}{The adjusted survival curves estimated in each bootstrap sample.
 }
-\item{boot_adjsurv}{The mean adjusted survival curves of all bootstrap samples and corresponding standard errors and percentile confidence intervals.
+\item{boot_adj}{The mean adjusted survival curves of all bootstrap samples and corresponding standard errors and percentile confidence intervals.
 }
 
 When multiple imputation was used, the function additionally contains a \code{mids_analyses} object, containing the \code{adjustedsurv} objects for each imputed dataset.
@@ -175,6 +174,8 @@ glm_mod <- glm(group ~ x2 + x3 + x5 + x6, data=sim_dat, family="binomial")
 # outcome model
 cox_mod <- coxph(Surv(time, event) ~ x1 + x2 + x4 + x5 + group,
                  data=sim_dat, x=TRUE)
+
+if (requireNamespace("riskRegression")) {
 
 # using direct adjustment with asymptotic confidence intervals
 adjsurv <- adjustedsurv(data=sim_dat,
@@ -231,9 +232,13 @@ adjsurv <- adjustedsurv(data=sim_dat,
                         conf_int=TRUE,
                         bootstrap=TRUE,
                         n_boot=10)
+}
 
 # not run because those are too slow
 \donttest{
+
+if (requireNamespace("riskRegression")) {
+
 # using bootstrapping with direct adjustment, run in parallel
 # on two cores
 adjsurv <- adjustedsurv(data=sim_dat,
@@ -246,8 +251,11 @@ adjsurv <- adjustedsurv(data=sim_dat,
                         bootstrap=TRUE,
                         n_boot=4,
                         n_cores=2)
+}
 
 # using multiple imputation
+if (requireNamespace("mice") & requireNamespace("WeightIt")) {
+
 library(mice)
 library(WeightIt)
 
@@ -272,6 +280,7 @@ adj <- adjustedsurv(data=mids,
                     treatment_model=group ~ x1 + x2 + x5 + x6,
                     weight_method="ps")
 plot(adj)
+}
 
 # More specific examples can be found in the documentation of each
 # respective surv_method. See ?surv_ + "method" for more information.

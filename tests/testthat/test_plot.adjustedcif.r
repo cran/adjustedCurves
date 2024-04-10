@@ -167,7 +167,8 @@ test_that("plot, using conf_int_alpha", {
 })
 
 test_that("plot, using steps", {
-  plt <- plot(adj, steps=FALSE)
+  # NOTE: using suppressWarnings() here cause we can safely ignore it
+  plt <- suppressWarnings(plot(adj, steps=FALSE))
   expect_s3_class(plt, "ggplot")
   vdiffr::expect_doppelganger("plot, using steps", fig=plt)
 })
@@ -224,10 +225,10 @@ test_that("plot, using many many things", {
 
 test_that("Isotonic Regression with missing values", {
   adj_err <- adj
-  adj_err$adjcif$cif[1] <- NA
+  adj_err$adj$cif[1] <- NA
   expect_error(plot(adj_err, iso_reg=TRUE),
                paste0("Isotonic Regression cannot be used when there are ",
-                      "missing values in the final CIF estimates."))
+                      "missing values in the final estimates."))
 })
 
 test_that("single_color overwriting color", {
@@ -250,7 +251,7 @@ test_that("undefined censoring_ind argument", {
 
 test_that("use_boot with no boot no ci", {
   adj_err <- adj
-  adj_err$boot_adjcif <- NULL
+  adj_err$boot_adj <- NULL
   expect_warning(plot(adj_err, use_boot=TRUE, conf_int=TRUE),
                  paste0("Cannot use bootstrapped estimates as they were not ",
                         "estimated. Need bootstrap=TRUE in ",
@@ -260,7 +261,7 @@ test_that("use_boot with no boot no ci", {
 
 test_that("use_boot would work, conf_int not", {
   adj_err <- adj
-  adj_err$adjcif$ci_lower <- NULL
+  adj_err$adj$ci_lower <- NULL
   expect_warning(plot(adj_err, use_boot=FALSE, conf_int=TRUE),
                  paste0("Cannot draw confidence intervals. Either set ",
                         "'conf_int=TRUE' in adjustedcif() call or ",

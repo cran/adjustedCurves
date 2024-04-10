@@ -36,12 +36,12 @@ plot.adjustedcif <- function(x, conf_int=FALSE, max_t=Inf,
   requireNamespace("ggplot2")
 
   # get relevant data for the confidence interval
-  if (use_boot & is.null(x$boot_adjcif)) {
-    plotdata <- x$adjcif
+  if (use_boot & is.null(x$boot_adj)) {
+    plotdata <- x$adj
   } else if (use_boot) {
-    plotdata <- x$boot_adjcif
+    plotdata <- x$boot_adj
   } else {
-    plotdata <- x$adjcif
+    plotdata <- x$adj
   }
 
   # ensure that curves always start at 0
@@ -59,12 +59,12 @@ plot.adjustedcif <- function(x, conf_int=FALSE, max_t=Inf,
   # in some methods estimates can be outside the 0, 1 bounds,
   # if specified set those to 0 or 1 respectively
   if (force_bounds) {
-    plotdata <- force_bounds_cif(plotdata)
+    plotdata <- force_bounds_est(plotdata)
   }
 
   # apply isotonic regression if specified
   if (iso_reg) {
-    plotdata <- iso_reg_cif(plotdata)
+    plotdata <- iso_reg_est(plotdata)
   }
 
   mapping <- ggplot2::aes(x=.data$time, y=.data$cif, color=.data$group,
@@ -161,17 +161,16 @@ plot.adjustedcif <- function(x, conf_int=FALSE, max_t=Inf,
       x$data <- x$data[which(x$data[, x$call$ev_time] <= max_t), ]
       cens_times <- sort(unique(x$data[, x$call$ev_time][
         x$data[, x$call$event]==0 & x$data[, x$call$variable]==levs[i]]))
-      adjcif_temp <- plotdata[plotdata$group==levs[i], ]
+      adj_temp <- plotdata[plotdata$group==levs[i], ]
 
       if (steps) {
-        read_fun <- read_from_step_function
+        interpolation <- "steps"
       } else {
-        read_fun <- read_from_linear_function
+        interpolation <- "linear"
       }
 
-      cens_cif <- vapply(X=cens_times, FUN=read_fun,
-                         FUN.VALUE=numeric(1), data=adjcif_temp,
-                         est="cif")
+      cens_cif <- read_from_fun(x=cens_times, interpolation=interpolation,
+                                data=adj_temp, est="cif")
       cens_dat[[i]] <- data.frame(time=cens_times, cif=cens_cif,
                                   group=levs[i])
 
@@ -227,7 +226,7 @@ plot.adjustedcif <- function(x, conf_int=FALSE, max_t=Inf,
   }
 
   ## Confidence intervals
-  if (conf_int & use_boot & is.null(x$boot_adjcif)) {
+  if (conf_int & use_boot & is.null(x$boot_adj)) {
     warning("Cannot use bootstrapped estimates as they were not estimated.",
             " Need bootstrap=TRUE in adjustedcif() call.")
   } else if (conf_int & !use_boot & !"ci_lower" %in% colnames(plotdata)) {

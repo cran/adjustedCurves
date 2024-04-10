@@ -256,15 +256,16 @@ literature therein.</p>
 in <code>adjustedsurv()</code>:</p>
 <table>
 <colgroup>
+<col width="1%" />
 <col width="5%" />
-<col width="11%" />
-<col width="11%" />
-<col width="11%" />
+<col width="10%" />
+<col width="10%" />
+<col width="10%" />
 <col width="8%" />
 <col width="5%" />
 <col width="7%" />
 <col width="4%" />
-<col width="10%" />
+<col width="9%" />
 <col width="6%" />
 <col width="5%" />
 <col width="6%" />
@@ -272,6 +273,7 @@ in <code>adjustedsurv()</code>:</p>
 </colgroup>
 <thead>
 <tr class="header">
+<th align="left"></th>
 <th align="left">Method</th>
 <th align="left">Supports Unmeasured Confounding</th>
 <th align="left">Supports Categorical Treatments</th>
@@ -289,6 +291,7 @@ in <code>adjustedsurv()</code>:</p>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">1</td>
 <td align="left">“direct”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -304,6 +307,7 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">riskRegression</td>
 </tr>
 <tr class="even">
+<td align="left">2</td>
 <td align="left">“direct_pseudo”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -319,6 +323,7 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">geepack, prodlim</td>
 </tr>
 <tr class="odd">
+<td align="left">3</td>
 <td align="left">“iptw_km”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -334,6 +339,7 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">-</td>
 </tr>
 <tr class="even">
+<td align="left">4</td>
 <td align="left">“iptw_cox”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -349,6 +355,7 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">-</td>
 </tr>
 <tr class="odd">
+<td align="left">5</td>
 <td align="left">“iptw_pseudo”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -364,6 +371,7 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">prodlim</td>
 </tr>
 <tr class="even">
+<td align="left">6</td>
 <td align="left">“matching”</td>
 <td align="left">no</td>
 <td align="left">no</td>
@@ -379,6 +387,7 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">Matching</td>
 </tr>
 <tr class="odd">
+<td align="left">7</td>
 <td align="left">“emp_lik”</td>
 <td align="left">no</td>
 <td align="left">no</td>
@@ -394,6 +403,7 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">MASS</td>
 </tr>
 <tr class="even">
+<td align="left">8</td>
 <td align="left">“aiptw”</td>
 <td align="left">no</td>
 <td align="left">no</td>
@@ -409,6 +419,7 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">riskRegression</td>
 </tr>
 <tr class="odd">
+<td align="left">9</td>
 <td align="left">“aiptw_pseudo”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -424,21 +435,7 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">geepack, prodlim</td>
 </tr>
 <tr class="even">
-<td align="left">“tmle”</td>
-<td align="left">no</td>
-<td align="left">no</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">both</td>
-<td align="left">no</td>
-<td align="left">- - -</td>
-<td align="left">concrete</td>
-</tr>
-<tr class="odd">
+<td align="left">11</td>
 <td align="left">“strat_amato”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -453,7 +450,8 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">+++</td>
 <td align="left">-</td>
 </tr>
-<tr class="even">
+<tr class="odd">
+<td align="left">12</td>
 <td align="left">“strat_nieto”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -468,7 +466,8 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">+++</td>
 <td align="left">-</td>
 </tr>
-<tr class="odd">
+<tr class="even">
+<td align="left">13</td>
 <td align="left">“strat_cupples”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -483,7 +482,8 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">+++</td>
 <td align="left">-</td>
 </tr>
-<tr class="even">
+<tr class="odd">
+<td align="left">14</td>
 <td align="left">“iv_2SRIF”</td>
 <td align="left">yes</td>
 <td align="left">no</td>
@@ -498,7 +498,8 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">+</td>
 <td align="left">-</td>
 </tr>
-<tr class="odd">
+<tr class="even">
+<td align="left">15</td>
 <td align="left">“prox_iptw”</td>
 <td align="left">yes</td>
 <td align="left">no</td>
@@ -513,7 +514,8 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">- -</td>
 <td align="left">numDeriv</td>
 </tr>
-<tr class="even">
+<tr class="odd">
+<td align="left">16</td>
 <td align="left">“prox_aiptw”</td>
 <td align="left">yes</td>
 <td align="left">no</td>
@@ -528,7 +530,8 @@ in <code>adjustedsurv()</code>:</p>
 <td align="left">- -</td>
 <td align="left">numDeriv</td>
 </tr>
-<tr class="odd">
+<tr class="even">
+<td align="left">17</td>
 <td align="left">“km”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -596,10 +599,6 @@ weightit()</td>
 <td align="left">“aiptw_pseudo”</td>
 <td align="left">glm or multinom object or propensity scores</td>
 </tr>
-<tr class="odd">
-<td align="left">“tmle”</td>
-<td align="left">vector of SuperLearner libraries</td>
-</tr>
 </tbody>
 </table>
 <p>After having created an <code>adjustedsurv</code> object using the
@@ -637,8 +636,9 @@ survival curve equality in an interval</li>
 <h1>Methods in <code>adjustedcif()</code></h1>
 <p>The following table gives a general overview of all supported methods
 in <code>adjustedcif()</code>:</p>
-<table>
+<table style="width:100%;">
 <colgroup>
+<col width="1%" />
 <col width="5%" />
 <col width="10%" />
 <col width="10%" />
@@ -655,6 +655,7 @@ in <code>adjustedcif()</code>:</p>
 </colgroup>
 <thead>
 <tr class="header">
+<th align="left"></th>
 <th align="left">Method</th>
 <th align="left">Supports Unmeasured Confounding</th>
 <th align="left">Supports Categorical Treatments</th>
@@ -672,6 +673,7 @@ in <code>adjustedcif()</code>:</p>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">1</td>
 <td align="left">“direct”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -687,6 +689,7 @@ in <code>adjustedcif()</code>:</p>
 <td align="left">riskRegression</td>
 </tr>
 <tr class="even">
+<td align="left">2</td>
 <td align="left">“direct_pseudo”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -695,13 +698,14 @@ in <code>adjustedcif()</code>:</p>
 <td align="left">yes</td>
 <td align="left">no</td>
 <td align="left">no</td>
-<td align="left">yes</td>
+<td align="left">no</td>
 <td align="left">outcome</td>
 <td align="left">no</td>
 <td align="left">- -</td>
 <td align="left">geepack, prodlim</td>
 </tr>
 <tr class="odd">
+<td align="left">3</td>
 <td align="left">“iptw”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -717,6 +721,7 @@ in <code>adjustedcif()</code>:</p>
 <td align="left">riskRegression</td>
 </tr>
 <tr class="even">
+<td align="left">4</td>
 <td align="left">“iptw_pseudo”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -725,13 +730,14 @@ in <code>adjustedcif()</code>:</p>
 <td align="left">no</td>
 <td align="left">no</td>
 <td align="left">no</td>
-<td align="left">yes</td>
+<td align="left">no</td>
 <td align="left">treatment</td>
 <td align="left">depends</td>
 <td align="left">+</td>
 <td align="left">prodlim</td>
 </tr>
 <tr class="odd">
+<td align="left">5</td>
 <td align="left">“matching”</td>
 <td align="left">no</td>
 <td align="left">no</td>
@@ -747,6 +753,7 @@ in <code>adjustedcif()</code>:</p>
 <td align="left">Matching</td>
 </tr>
 <tr class="even">
+<td align="left">6</td>
 <td align="left">“aiptw”</td>
 <td align="left">no</td>
 <td align="left">no</td>
@@ -762,6 +769,7 @@ in <code>adjustedcif()</code>:</p>
 <td align="left">riskRegression</td>
 </tr>
 <tr class="odd">
+<td align="left">7</td>
 <td align="left">“aiptw_pseudo”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -770,28 +778,14 @@ in <code>adjustedcif()</code>:</p>
 <td align="left">no</td>
 <td align="left">no</td>
 <td align="left">yes</td>
-<td align="left">yes</td>
+<td align="left">no</td>
 <td align="left">both</td>
 <td align="left">no</td>
 <td align="left">- -</td>
 <td align="left">geepack, prodlim</td>
 </tr>
 <tr class="even">
-<td align="left">“tmle”</td>
-<td align="left">no</td>
-<td align="left">no</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">yes</td>
-<td align="left">both</td>
-<td align="left">no</td>
-<td align="left">- - -</td>
-<td align="left">concrete</td>
-</tr>
-<tr class="odd">
+<td align="left">9</td>
 <td align="left">“aalen_johansen”</td>
 <td align="left">no</td>
 <td align="left">yes</td>
@@ -842,10 +836,6 @@ weightit()</td>
 <tr class="odd">
 <td align="left">“aiptw_pseudo”</td>
 <td align="left">glm or multinom object or propensity scores</td>
-</tr>
-<tr class="even">
-<td align="left">“tmle”</td>
-<td align="left">vector of SuperLearner libraries</td>
 </tr>
 </tbody>
 </table>

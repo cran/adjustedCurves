@@ -84,7 +84,6 @@ The primary purpose of the \code{adjustedcif} function is to provide a convenien
   \item{"\link[=cif_matching]{matching}": Using Propensity Score Matching to estimate the adjusted CIFs.}
   \item{"\link[=cif_aiptw]{aiptw}": An Augmented Inverse Probability of Treatment Weighting estimator.}
   \item{"\link[=cif_aiptw_pseudo]{aiptw_pseudo}": An Augmented Inverse Probability of Treatment Weighting estimator using Pseudo-Values.}
-  \item{"\link[=cif_tmle]{tmle}": Targeted Maximum Likelihood Estimation for continuous time time-to-event data with competing events.}
   \item{"\link[=cif_aalen_johansen]{aalen_johansen}": A simple stratified Aalen-Johansen estimator without any form of adjustment.}
 }
 
@@ -116,7 +115,7 @@ A general plot of the estimated adjusted CIFs can be obtained using the associat
 \value{
 Returns an \code{adjustedcif} object containing the following objects:
 
-\item{adjcif}{A \code{data.frame} of estimated cumulative incidences for \code{cause} at some points in time for each level of \code{variable}. Depending on the arguments used also includes standard errors and confidence intervals.
+\item{adj}{A \code{data.frame} of estimated cumulative incidences for \code{cause} at some points in time for each level of \code{variable}. Depending on the arguments used also includes standard errors and confidence intervals.
 }
 \item{method}{
 The method used to adjust the CIFs.
@@ -131,7 +130,7 @@ When the argument \code{bootstrap} is set to \code{TRUE} it additionally contain
 
 \item{boot_data}{The adjusted CIFs estimated in each bootstrap sample.
 }
-\item{boot_adjcif}{The mean CIFs of all bootstrap samples and corresponding standard errors and percentile confidence intervals.
+\item{boot_adj}{The mean CIFs of all bootstrap samples and corresponding standard errors and percentile confidence intervals.
 }
 
 When multiple imputation was used, the function additionally contains a \code{mids_analyses} object, containing the \code{adjustedcif} objects for each imputed dataset.
@@ -155,7 +154,6 @@ The function itself was written by Robin Denz, but some \code{cif_method} functi
 \examples{
 library(adjustedCurves)
 library(survival)
-library(riskRegression)
 
 set.seed(42)
 
@@ -165,6 +163,10 @@ sim_dat$group <- as.factor(sim_dat$group)
 
 # treatment assignment model
 glm_mod <- glm(group ~ x2 + x3 + x5 + x6, data=sim_dat, family="binomial")
+
+if (requireNamespace("riskRegression")) {
+
+library(riskRegression)
 
 # outcome model
 cox_mod <- CSC(Hist(time, event) ~ x1 + x2 + x4 + x5 + group, data=sim_dat)
@@ -230,6 +232,8 @@ adjcif <- adjustedcif(data=sim_dat,
                       bootstrap=TRUE,
                       n_boot=10)
 
+}
+
 # not run because those are too slow
 \donttest{
 # using bootstrapping with direct adjustment, run in parallel
@@ -237,6 +241,8 @@ adjcif <- adjustedcif(data=sim_dat,
 library(foreach)
 library(parallel)
 library(doRNG)
+
+if (requireNamespace("riskRegression")) {
 
 adjcif <- adjustedcif(data=sim_dat,
                       variable="group",
@@ -249,13 +255,16 @@ adjcif <- adjustedcif(data=sim_dat,
                       bootstrap=TRUE,
                       n_boot=4,
                       n_cores=2)
+}
+
+if (requireNamespace("mice") & requireNamespace("WeightIt")) {
 
 # using multiple imputation
 library(mice)
 library(WeightIt)
 
 # simulate some data as example
-sim_dat <- sim_confounded_crisk(n=50, max_t=1.2)
+sim_dat <- sim_confounded_crisk(n=100, max_t=1.2)
 sim_dat$group <- as.factor(sim_dat$group)
 
 # introduce random missingness in x1 as example
@@ -276,6 +285,7 @@ adj <- adjustedcif(data=mids,
                    treatment_model=group ~ x1 + x2 + x5 + x6,
                    weight_method="ps")
 plot(adj, force_bounds=TRUE, iso_reg=TRUE)
+}
 
 # More specific examples can be found in the documentation of each
 # respective cif_method. See ?cif_ + "method" for more information.

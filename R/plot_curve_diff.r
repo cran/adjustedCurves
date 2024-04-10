@@ -50,21 +50,18 @@ plot_curve_diff <- function(x, group_1=NULL, group_2=NULL, conf_int=FALSE,
                                integral=integral, use_boot=use_boot)
 
   # object specific stuff
+  adj_data <- x$adj
   if (inherits(x, "adjustedsurv")) {
     mode <- "surv"
-    adj_data <- x$adjsurv
   } else {
     mode <- "cif"
-    adj_data <- x$adjcif
   }
 
   # what kind of interpolation to use
   if (type=="lines") {
     interpolation <- "linear"
-    read_fun <- read_from_linear_function
   } else {
     interpolation <- "steps"
-    read_fun <- read_from_step_function
   }
 
   # get relevant data
@@ -233,8 +230,8 @@ plot_curve_diff <- function(x, group_1=NULL, group_2=NULL, conf_int=FALSE,
     restricted_times <- restricted_times[restricted_times <= to &
                                          restricted_times >= from]
 
-    restricted_est <- vapply(X=restricted_times, FUN=read_fun,
-                             FUN.VALUE=numeric(1), est="diff", data=plotdata)
+    restricted_est <- read_from_fun(x=restricted_times, est="diff",
+                                    interpolation=interpolation, data=plotdata)
     plotdata_r <- data.frame(time=restricted_times,
                              diff=restricted_est)
 
@@ -285,21 +282,18 @@ plot_curve_ratio <- function(x, group_1=NULL, group_2=NULL, conf_int=FALSE,
                                integral=FALSE, use_boot=use_boot)
 
   # object specific stuff
+  adj_data <- x$adj
   if (inherits(x, "adjustedsurv")) {
     mode <- "surv"
-    adj_data <- x$adjsurv
   } else {
     mode <- "cif"
-    adj_data <- x$adjcif
   }
 
   # what kind of interpolation to use
   if (type=="lines") {
     interpolation <- "linear"
-    read_fun <- read_from_linear_function
   } else {
     interpolation <- "steps"
-    read_fun <- read_from_step_function
   }
 
   # get relevant data

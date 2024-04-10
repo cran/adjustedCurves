@@ -126,12 +126,12 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
     for (i in seq_len(length(out))) {
 
       # direct estimate
-      dat <- out[[i]]$adjsurv
+      dat <- out[[i]]$adj
       dat$.imp <- i
       dats[[i]] <- dat
 
       # bootstrap estimate
-      boot_dat <- out[[i]]$boot_adjsurv
+      boot_dat <- out[[i]]$boot_adj
       boot_dat$.imp <- i
       boot_dats[[i]] <- boot_dat
 
@@ -180,19 +180,20 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
     }
 
     if (force_bounds) {
-      plotdata <- force_bounds_surv(plotdata)
+      plotdata <- force_bounds_est(plotdata)
     }
 
     if (iso_reg) {
-      plotdata <- iso_reg_surv(plotdata)
+      plotdata <- iso_reg_est(plotdata)
     }
 
     # output object
     out_obj <- list(mids_analyses=out,
-                    adjsurv=plotdata,
-                    data=data$data,
+                    adj=plotdata,
+                    data=data,
                     method=method,
                     categorical=ifelse(length(levs)>2, TRUE, FALSE),
+                    conf_level=conf_level,
                     call=match.call())
 
     if (bootstrap) {
@@ -212,7 +213,7 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
       plotdata_boot$ci_lower <- surv_ci$left
       plotdata_boot$ci_upper <- surv_ci$right
 
-      out_obj$boot_adjsurv <- plotdata_boot
+      out_obj$boot_adj <- plotdata_boot
 
     }
 
@@ -292,7 +293,7 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
         cl <- parallel::makeCluster(n_cores, outfile="")
         doParallel::registerDoParallel(cl)
         pkgs <- (.packages())
-        export_objs <- c("get_iptw_weights", "read_from_step_function",
+        export_objs <- c("get_iptw_weights", "read_from_fun",
                          "adjustedsurv_boot", "trim_weights",
                          "calc_pseudo_surv", "geese_predictions",
                          "load_needed_packages", "specific_times",
@@ -356,17 +357,18 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
     plotdata$group <- factor(plotdata$group, levels=levs)
 
     if (force_bounds) {
-      plotdata <- force_bounds_surv(plotdata)
+      plotdata <- force_bounds_est(plotdata)
     }
 
     if (iso_reg) {
-      plotdata <- iso_reg_surv(plotdata)
+      plotdata <- iso_reg_est(plotdata)
     }
 
-    out <- list(adjsurv=plotdata,
+    out <- list(adj=plotdata,
                 data=data,
                 method=method,
-                categorical=ifelse(length(levs) > 2, TRUE, FALSE),
+                categorical=length(levs) > 2,
+                conf_level=conf_level,
                 call=match.call())
 
     if (bootstrap) {
@@ -385,11 +387,11 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
 
       # put together
       boot_stats$surv <- plotdata_temp$surv
-      out$boot_adjsurv <- boot_stats[!is.na(boot_stats$surv), ]
+      out$boot_adj <- boot_stats[!is.na(boot_stats$surv), ]
 
       if (method %in% c("km", "iptw_km", "iptw_cox", "strat_amato",
                         "strat_nieto")) {
-        out$adjsurv <- out$adjsurv[!is.na(out$adjsurv$surv), ]
+        out$adj <- out$adj[!is.na(out$adj$surv), ]
       }
     }
 
@@ -450,10 +452,10 @@ adjustedsurv_boot <- function(data, variable, ev_time, event, method,
   args <- c(args, pass_args)
 
   method_results <- R.utils::doCall(surv_fun, args=args)
-  adjsurv_boot <- method_results$plotdata
-  adjsurv_boot$boot <- i
+  adj_boot <- method_results$plotdata
+  adj_boot$boot <- i
 
-  return(adjsurv_boot)
+  return(adj_boot)
 }
 
 ## S3 summary method for adjustedsurv objects
@@ -528,9 +530,9 @@ summary.adjustedsurv <- function(object, ...) {
   }
 
   if (is.null(object$mids_analyses)) {
-    cat("   - Using a single dataset")
+    cat("   - Using a single dataset\n")
   } else {
-    cat("   - Using multiply imputed dataset")
+    cat("   - Using multiply imputed dataset\n")
   }
 }
 
