@@ -129,6 +129,12 @@ The method used to adjust the survival curves.
 }
 \item{categorical}{Whether there are more than 2 groups in \code{variable}.
 }
+\item{ev_time}{The supplied \code{ev_time} string.
+}
+\item{event}{The supplied \code{event} string.
+}
+\item{variable}{The supplied \code{variable} string.
+}
 \item{call}{
 The original function call.
 }

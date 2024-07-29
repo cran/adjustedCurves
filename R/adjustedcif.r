@@ -27,6 +27,8 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
                         force_bounds=FALSE, mi_extrapolation=FALSE,
                         ...) {
 
+  var_w <- var_b <- B <- var_t <- cif_est <- NULL
+
   # use data.frame methods only, no tibbles etc.
   if (inherits(data, "data.frame")) {
     data <- as.data.frame(data)
@@ -142,9 +144,20 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
       # use Rubins Rule
       plotdata <- dats %>%
         dplyr::group_by(., time, group) %>%
-        dplyr::summarise(cif=mean(cif, na.rm=mi_extrapolation),
-                         se=mean(se, na.rm=mi_extrapolation),
-                         .groups="drop_last")
+        dplyr::summarise(cif_est=mean(cif, na.rm=mi_extrapolation),
+                         var_w = mean(se^2, na.rm = mi_extrapolation),
+                         # Estimated between imputation variance
+                         var_b = stats::var(cif, na.rm = mi_extrapolation),
+                         # Number of imputed datasets
+                         B = dplyr::n(),
+                         # Estimated total variance
+                         var_t = var_w + var_b + var_b/B,
+                         se = sqrt(var_t),
+                         .groups="drop_last") %>%
+        # dplyr::select(-var_w, -var_b, -B, -var_t) %>%
+        dplyr::select(-B) %>%
+        dplyr::rename(cif = cif_est)
+
       plotdata <- as.data.frame(plotdata)
 
       # re-calculate confidence intervals using pooled se
@@ -339,7 +352,8 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
     args <- list(data=data, variable=variable, ev_time=ev_time,
                  event=event, conf_int=conf_int, conf_level=conf_level,
                  times=times, cause=cause, ...)
-    method_results <- R.utils::doCall(cif_fun, args=args)
+    method_results <- R.utils::doCall(cif_fun, args=args,
+                                      .ignoreUnusedArgs=FALSE)
     plotdata <- method_results$plotdata
 
     # keep factor ordering the same
@@ -427,7 +441,7 @@ adjustedcif_boot <- function(data, variable, ev_time, event, cause, method,
                cause=cause)
   args <- c(args, pass_args)
 
-  method_results <- R.utils::doCall(cif_fun, args=args)
+  method_results <- R.utils::doCall(cif_fun, args=args, .ignoreUnusedArgs=FALSE)
   adj_boot <- method_results$plotdata
   adj_boot$boot <- i
 

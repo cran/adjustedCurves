@@ -27,6 +27,8 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
                          force_bounds=FALSE, mi_extrapolation=FALSE,
                          ...) {
 
+  var_w <- var_b <- B <- var_t <- surv_est <- NULL
+
   # use data.frame methods only, no tibbles etc.
   if (inherits(data, "data.frame")) {
     data <- as.data.frame(data)
@@ -146,9 +148,21 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
       # use Rubins Rule
       plotdata <- dats %>%
         dplyr::group_by(., time, group) %>%
-        dplyr::summarise(surv=mean(surv, na.rm=mi_extrapolation),
-                         se=mean(se, na.rm=mi_extrapolation),
-                         .groups="drop_last")
+        dplyr::summarise(surv_est=mean(surv, na.rm=mi_extrapolation),
+                         # Estimated within imputation variance
+                         var_w = mean(se^2, na.rm = mi_extrapolation),
+                         # Estimated between imputation variance
+                         var_b = stats::var(surv, na.rm = mi_extrapolation),
+                         # Number of imputed datasets
+                         B = dplyr::n(),
+                         # Estimated total variance
+                         var_t = var_w + var_b + var_b/B,
+                         se = sqrt(var_t),
+                         .groups="drop_last") %>%
+        # dplyr::select(-var_w, -var_b, -B, -var_t) %>%
+        dplyr::select(-B) %>%
+        dplyr::rename(surv = surv_est)
+
       plotdata <- as.data.frame(plotdata)
 
       # re-calculate confidence intervals using pooled se
@@ -194,6 +208,9 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
                     method=method,
                     categorical=ifelse(length(levs)>2, TRUE, FALSE),
                     conf_level=conf_level,
+                    ev_time=ev_time,
+                    event=event,
+                    variable=variable,
                     call=match.call())
 
     if (bootstrap) {
@@ -350,7 +367,8 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
     args <- list(data=data, variable=variable, ev_time=ev_time,
                  event=event, conf_int=conf_int, conf_level=conf_level,
                  times=times, ...)
-    method_results <- R.utils::doCall(surv_fun, args=args)
+    method_results <- R.utils::doCall(surv_fun, args=args,
+                                      .ignoreUnusedArgs=FALSE)
     plotdata <- method_results$plotdata
 
     # keep factor levels in same order as data
@@ -369,6 +387,9 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
                 method=method,
                 categorical=length(levs) > 2,
                 conf_level=conf_level,
+                ev_time=ev_time,
+                variable=variable,
+                event=event,
                 call=match.call())
 
     if (bootstrap) {
@@ -451,7 +472,8 @@ adjustedsurv_boot <- function(data, variable, ev_time, event, method,
                event=event, conf_int=FALSE, conf_level=0.95, times=times)
   args <- c(args, pass_args)
 
-  method_results <- R.utils::doCall(surv_fun, args=args)
+  method_results <- R.utils::doCall(surv_fun, args=args,
+                                    .ignoreUnusedArgs=FALSE)
   adj_boot <- method_results$plotdata
   adj_boot$boot <- i
 
