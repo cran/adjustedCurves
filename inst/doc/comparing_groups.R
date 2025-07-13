@@ -110,6 +110,6 @@ plot_curve_diff(adjsurv, fill_area=TRUE, integral=TRUE, integral_to=0.7,
 adjtest <- adjusted_curve_test(adjsurv, from=0, to=0.7)
 adjtest
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 plot(adjtest, type="curves")
 

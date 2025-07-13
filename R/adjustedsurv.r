@@ -1,17 +1,3 @@
-# Copyright (C) 2021  Robin Denz
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ## Main function of the package. Is basically a wrapper around
 ## all other functions, offering additional high level stuff
@@ -217,9 +203,19 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
 
       plotdata_boot <- boot_dats %>%
         dplyr::group_by(., time, group) %>%
-        dplyr::summarise(surv=mean(surv, na.rm=mi_extrapolation),
-                         se=mean(se, na.rm=mi_extrapolation),
-                         .groups="drop_last")
+        dplyr::summarise(surv_est=mean(surv, na.rm=mi_extrapolation),
+                         # Estimated within imputation variance
+                         var_w = mean(se^2, na.rm = mi_extrapolation),
+                         # Estimated between imputation variance
+                         var_b = stats::var(surv, na.rm = mi_extrapolation),
+                         # Number of bootstrap replications
+                         B = dplyr::n(),
+                         # Estimated total variance
+                         var_t = var_w + var_b + var_b/B,
+                         se = sqrt(var_t),
+                         .groups="drop_last") %>%
+        dplyr::select(-B) %>%
+        dplyr::rename(surv = surv_est)
       plotdata_boot <- as.data.frame(plotdata_boot)
 
       # re-calculate confidence intervals using pooled se
@@ -323,7 +319,8 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
           adjustedsurv_boot(data=data, variable=variable, ev_time=ev_time,
                             event=event, method=method,
                             times=times, i=i, surv_fun=surv_fun,
-                            na.action=na.action, ...)
+                            na.action=na.action, force_bounds=force_bounds,
+                            iso_reg=iso_reg, ...)
                                      }
         parallel::stopCluster(cl)
 
@@ -337,6 +334,8 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
                                              times=times, i=i,
                                              surv_fun=surv_fun,
                                              na.action=na.action,
+                                             force_bounds=force_bounds,
+                                             iso_reg=iso_reg,
                                              ...)
         }
       }
@@ -427,7 +426,8 @@ adjustedsurv <- function(data, variable, ev_time, event, method,
 
 ## perform one bootstrap iteration
 adjustedsurv_boot <- function(data, variable, ev_time, event, method,
-                              times, i, surv_fun, na.action, ...) {
+                              times, i, surv_fun, na.action, force_bounds,
+                              iso_reg, ...) {
 
   # draw sample
   indices <- sample(x=rownames(data), size=nrow(data), replace=TRUE)
@@ -475,6 +475,15 @@ adjustedsurv_boot <- function(data, variable, ev_time, event, method,
   method_results <- R.utils::doCall(surv_fun, args=args,
                                     .ignoreUnusedArgs=FALSE)
   adj_boot <- method_results$plotdata
+
+  if (force_bounds) {
+    adj_boot <- force_bounds_est(adj_boot)
+  }
+
+  if (iso_reg) {
+    adj_boot <- iso_reg_est(adj_boot, na_ignore=TRUE)
+  }
+
   adj_boot$boot <- i
 
   return(adj_boot)

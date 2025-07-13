@@ -1,17 +1,3 @@
-# Copyright (C) 2021  Robin Denz
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ## estimate iptw weights
 get_iptw_weights <- function(data, treatment_model, weight_method,
@@ -499,13 +485,17 @@ add_rows_with_zero <- function(plotdata, mode="surv") {
 }
 
 ## perform isotonic regression on survival / CIF estimates
-iso_reg_est <- function(plotdata) {
+iso_reg_est <- function(plotdata, na_ignore=FALSE) {
 
   mode <- ifelse("surv" %in% colnames(plotdata), "surv", "cif")
 
-  if (anyNA(plotdata[, mode])) {
+  any_mis <- anyNA(plotdata[, mode])
+  if (any_mis & !na_ignore) {
     stop("Isotonic Regression cannot be used when there are missing",
          " values in the final estimates.")
+  } else if (any_mis & na_ignore) {
+    plotdata_na <- plotdata[is.na(plotdata[, mode]), ]
+    plotdata <- plotdata[!is.na(plotdata[, mode]), ]
   }
 
   for (lev in levels(plotdata$group)) {
@@ -525,6 +515,11 @@ iso_reg_est <- function(plotdata) {
       plotdata$ci_lower[plotdata$group==lev] <- temp$ci_lower - diff
       plotdata$ci_upper[plotdata$group==lev] <- temp$ci_upper - diff
     }
+  }
+
+  if (any_mis & na_ignore) {
+    plotdata <- rbind(plotdata, plotdata_na)
+    plotdata <- plotdata[order(plotdata$group, plotdata$time), ]
   }
 
   return(plotdata)

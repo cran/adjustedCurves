@@ -2,10 +2,10 @@
 knitr::opts_chunk$set(echo=TRUE)
 
 ## ----echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE----------------------
-#  install.packages("adjustedCurves")
+# install.packages("adjustedCurves")
 
 ## ----echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE----------------------
-#  remotes::install_github("RobinDenz1/adjustedCurves")
+# remotes::install_github("RobinDenz1/adjustedCurves")
 
 ## ----echo=TRUE, message=FALSE, warning=FALSE----------------------------------
 library(survival)

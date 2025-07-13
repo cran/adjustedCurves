@@ -1,24 +1,11 @@
-# Copyright (C) 2021  Robin Denz
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ## IPTW Kaplan-Meier estimate
 #' @export
 surv_iptw_km <- function(data, variable, ev_time, event, conf_int,
                          conf_level=0.95, times=NULL, treatment_model,
                          weight_method="ps", stabilize=FALSE,
-                         trim=FALSE, trim_quantiles=FALSE, ...) {
+                         trim=FALSE, trim_quantiles=FALSE,
+                         extend_to_last=TRUE, ...) {
 
   levs <- levels(data[, variable])
 
@@ -45,6 +32,11 @@ surv_iptw_km <- function(data, variable, ev_time, event, conf_int,
 
     # calculate weighted risk set and events
     tj <- c(0, sort(unique(dat_group[, ev_time][dat_group[, event]==1])))
+
+    if (extend_to_last) {
+      tj <- c(tj, max(dat_group[, ev_time], na.rm=TRUE))
+    }
+
     dj <- vapply(tj, function(x){sum(weights_group[dat_group[, ev_time]==x &
                                                      dat_group[, event]==1])},
                  FUN.VALUE=numeric(1))

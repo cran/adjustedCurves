@@ -1,17 +1,3 @@
-# Copyright (C) 2021  Robin Denz
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ## Direct Adjustment
 #' @export
@@ -84,22 +70,12 @@ surv_g_comp <- function(outcome_model, data, variable, times,
                               newdata=data_temp,
                               times=times,
                               ...)
-      # use function from pec package for fast & easy survival prediction
-      # NOTE: while aalen & cox.aalen are not working in predictRisk, keep them
-      #       here
+    # use function from pec package for fast & easy survival prediction
     } else if (inherits(outcome_model, c("pecCforest", "pecRpart",
-                                         "selectCox", "aalen", "cox.aalen"))) {
+                                         "selectCox"))) {
       requireNamespace("pec")
 
-      # get model.matrix if needed
-      if (inherits(outcome_model, c("aalen"))) {
-        mod_vars <- all.vars(outcome_model$call$formula)
-        mod_form <- paste0(" ~ ", paste0(mod_vars, collapse=" + "))
-        mod_data <- as.data.frame(stats::model.matrix(
-          stats::as.formula(mod_form), data=data_temp))
-      } else {
-        mod_data <- data_temp
-      }
+      mod_data <- data_temp
 
       # predict survival
       surv_lev <- pec::predictSurvProb(outcome_model,
@@ -115,7 +91,8 @@ surv_g_comp <- function(outcome_model, data, variable, times,
                                          "ranger", "rfsrc", "riskRegression",
                                          "ARR", "penfitS3", "gbm",
                                          "flexsurvreg", "singleEventCB",
-                                         "wglm", "hal9001"))) {
+                                         "wglm", "hal9001", "aalen",
+                                         "cox.aalen"))) {
       requireNamespace("riskRegression")
 
       surv_lev <- quiet(riskRegression::predictRisk(object=outcome_model,

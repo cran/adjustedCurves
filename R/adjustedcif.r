@@ -1,17 +1,3 @@
-# Copyright (C) 2021  Robin Denz
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ## Second main function of the package. Is basically a wrapper around
 ## all cif_method functions, offering additional high level stuff
@@ -208,9 +194,18 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
 
       plotdata_boot <- boot_dats %>%
         dplyr::group_by(., time, group) %>%
-        dplyr::summarise(cif=mean(cif),
-                         se=mean(se),
-                         .groups="drop_last")
+        dplyr::summarise(cif_est=mean(cif),
+                         var_w = mean(se^2, na.rm = mi_extrapolation),
+                         # Estimated between imputation variance
+                         var_b = stats::var(cif, na.rm = mi_extrapolation),
+                         # Number of bootstrap replications
+                         B = dplyr::n(),
+                         # Estimated total variance
+                         var_t = var_w + var_b + var_b/B,
+                         se = sqrt(var_t),
+                         .groups="drop_last") %>%
+        dplyr::select(-B) %>%
+        dplyr::rename(cif = cif_est)
       plotdata_boot <- as.data.frame(plotdata_boot)
 
       # re-calculate confidence intervals using pooled se
@@ -309,7 +304,8 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
           adjustedcif_boot(data=data, variable=variable, ev_time=ev_time,
                            event=event, method=method, times=times, i=i,
                            cif_fun=cif_fun, cause=cause,
-                           na.action=na.action, ...)
+                           na.action=na.action, force_bounds=force_bounds,
+                           iso_reg=iso_reg, ...)
         }
         parallel::stopCluster(cl)
 
@@ -322,7 +318,9 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
                                             method=method,
                                             times=times, i=i, cause=cause,
                                             cif_fun=cif_fun,
-                                            na.action=na.action, ...)
+                                            na.action=na.action,
+                                            force_bounds=force_bounds,
+                                            iso_reg=iso_reg, ...)
         }
       }
 
@@ -403,7 +401,8 @@ adjustedcif <- function(data, variable, ev_time, event, cause, method,
 
 ## perform one bootstrap iteration
 adjustedcif_boot <- function(data, variable, ev_time, event, cause, method,
-                             times, i, cif_fun, na.action, ...) {
+                             times, i, cif_fun, na.action, force_bounds,
+                             iso_reg, ...) {
 
   # draw sample
   indices <- sample(x=rownames(data), size=nrow(data), replace=TRUE)
@@ -443,6 +442,15 @@ adjustedcif_boot <- function(data, variable, ev_time, event, cause, method,
 
   method_results <- R.utils::doCall(cif_fun, args=args, .ignoreUnusedArgs=FALSE)
   adj_boot <- method_results$plotdata
+
+  if (force_bounds) {
+    adj_boot <- force_bounds_est(adj_boot)
+  }
+
+  if (iso_reg) {
+    adj_boot <- iso_reg_est(adj_boot, na_ignore=TRUE)
+  }
+
   adj_boot$boot <- i
 
   return(adj_boot)

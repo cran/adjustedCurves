@@ -1,17 +1,3 @@
-# Copyright (C) 2021  Robin Denz
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ## calculate area under curve of adjustedsurv, adjustedcif objects
 area_under_curve <- function(adj, from, to, conf_int, conf_level,
@@ -198,22 +184,10 @@ auc_ratio <- function(data, group_1, group_2, conf_int, conf_level) {
 #' @export
 adjusted_rmst <- function(adjsurv, to, from=0, conf_int=FALSE,
                           conf_level=0.95, interpolation="steps",
-                          difference=FALSE, ratio=FALSE,
                           contrast="none", group_1=NULL, group_2=NULL) {
 
   check_inputs_adj_rmst(adjsurv=adjsurv, from=from, to=to, conf_int=conf_int,
                         contrast=contrast)
-
-  # temporary deprecation error
-  if (difference) {
-    stop("The argument 'difference' has been deprecated",
-         " as of version 0.11.1. Instead of 'difference=TRUE' please use",
-         " contrast='diff'.")
-  } else if (ratio) {
-    stop("The argument 'ratio' has been deprecated",
-         " as of version 0.11.1. Instead of 'ratio=TRUE' please use",
-         " contrast='ratio'.")
-  }
 
   # set to FALSE if it can't be done
   if (conf_int & is.null(adjsurv$boot_adj)) {
@@ -244,22 +218,10 @@ adjusted_rmst <- function(adjsurv, to, from=0, conf_int=FALSE,
 #' @export
 adjusted_rmtl <- function(adj, to, from=0, conf_int=FALSE,
                           conf_level=0.95, interpolation="steps",
-                          difference=FALSE, ratio=FALSE,
                           contrast="none", group_1=NULL, group_2=NULL) {
 
   check_inputs_adj_rmtl(adj=adj, from=from, to=to, conf_int=conf_int,
                         contrast=contrast)
-
-  # temporary deprecation error
-  if (difference) {
-    stop("The argument 'difference' has been deprecated",
-         " as of version 0.11.1. Instead of 'difference=TRUE' please use",
-         " contrast='diff'.")
-  } else if (ratio) {
-    stop("The argument 'ratio' has been deprecated",
-         " as of version 0.11.1. Instead of 'ratio=TRUE' please use",
-         " contrast='ratio'.")
-  }
 
   # set to FALSE if it can't be done
   if (conf_int & is.null(adj$boot_adj)) {

@@ -1,17 +1,3 @@
-# Copyright (C) 2021  Robin Denz
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ## Using Augmented Inverse Probability of Treatment Weighting for CIFs
 #' @export
@@ -71,7 +57,7 @@ surv_aiptw <- function(data, variable, ev_time, event, conf_int,
                    event=event, conf_int=conf_int, conf_level=conf_level,
                    times=times, outcome_model=outcome_model,
                    treatment_model=treatment_model,
-                   cencoring_model=censoring_model, verbose=verbose,
+                   censoring_model=censoring_model, verbose=verbose,
                    cause=1, ...)
 
   plotdata <- out$plotdata
